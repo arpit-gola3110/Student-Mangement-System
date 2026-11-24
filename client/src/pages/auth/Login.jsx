@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import Button from '../../components/common/Button';
@@ -9,60 +12,90 @@ import {
   Mail,
   Lock,
   ArrowRight,
-  ShieldCheck,
   CheckCircle2,
-  Sparkles,
-  School
+  School,
+  AlertCircle
 } from 'lucide-react';
 
-export const Login = () => {
-  const [email, setEmail] = useState('admin@aktu.ac.in');
-  const [password, setPassword] = useState('AdminPassword@123');
-  const [rememberMe, setRememberMe] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+const loginFormSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Institutional email is required')
+    .email('Please provide a valid email format'),
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .max(128, 'Password exceeds maximum length')
+});
 
-  const { login } = useAuth();
+const getRoleDashboardPath = (role) => {
+  const normalized = (role || '').toLowerCase();
+  if (normalized === 'admin') return '/admin/dashboard';
+  if (normalized === 'faculty') return '/faculty/dashboard';
+  return '/student/dashboard';
+};
+
+const isPathAllowedForRole = (pathname, role) => {
+  if (!pathname || typeof pathname !== 'string') return false;
+  const normalizedRole = (role || '').toLowerCase();
+  if (pathname === '/announcements') return true;
+  if (normalizedRole === 'admin') return pathname.startsWith('/admin') || pathname.startsWith('/faculty') || pathname.startsWith('/student');
+  if (normalizedRole === 'faculty') return pathname.startsWith('/faculty');
+  if (normalizedRole === 'student') return pathname.startsWith('/student');
+  return false;
+};
+
+export const Login = () => {
+  const [serverError, setServerError] = useState('');
+  const { user, loading, login } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const validate = () => {
-    const errs = {};
-    if (!email) errs.email = 'Institutional email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) errs.email = 'Please provide a valid email format';
-    if (!password) errs.password = 'Password is required';
-    else if (password.length < 6) errs.password = 'Password must be at least 6 characters';
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    setIsLoading(true);
-    try {
-      const user = await login(email, password);
-      showToast(`Welcome, ${user.profile?.firstName || user.email}!`, 'success');
-      if (user.role === 'ADMIN') navigate('/admin/dashboard');
-      else if (user.role === 'FACULTY') navigate('/faculty/dashboard');
-      else navigate('/student/dashboard');
-    } catch (err) {
-      showToast('Authentication failed. Please check credentials.', 'error');
-    } finally {
-      setIsLoading(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting }
+  } = useForm({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: {
+      email: '',
+      password: ''
     }
-  };
+  });
 
-  const handleQuickSelect = (roleEmail, rolePass) => {
-    setEmail(roleEmail);
-    setPassword(rolePass);
-    setErrors({});
+  // Redirect already authenticated users to their role-appropriate dashboard
+  useEffect(() => {
+    if (!loading && user) {
+      navigate(getRoleDashboardPath(user.role), { replace: true });
+    }
+  }, [loading, user, navigate]);
+
+  const onSubmit = async (values) => {
+    if (isSubmitting) return;
+    setServerError('');
+
+    try {
+      const loggedInUser = await login(values.email, values.password);
+      showToast(`Welcome, ${loggedInUser.profile?.firstName || loggedInUser.email}!`, 'success');
+
+      const requestedPath = location.state?.from?.pathname;
+      const targetPath = isPathAllowedForRole(requestedPath, loggedInUser.role)
+        ? requestedPath
+        : getRoleDashboardPath(loggedInUser.role);
+
+      navigate(targetPath, { replace: true });
+    } catch (err) {
+      const message = err?.message || 'Authentication failed. Please check your credentials.';
+      setServerError(message);
+      showToast(message, 'error');
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-900 flex">
-      {/* Left Column: Visual Academic Branding (Visible on Desktop/Laptop) */}
+      {/* Left Column: Visual Academic Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-brand-950 via-slate-900 to-indigo-950 p-12 flex-col justify-between overflow-hidden border-r border-slate-800">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(79,70,229,0.15),transparent_50%)] pointer-events-none" />
 
@@ -133,39 +166,40 @@ export const Login = () => {
               <p className="text-xs text-slate-500 mt-1">Enter your institutional credentials to continue</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {serverError && (
+              <div
+                role="alert"
+                className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-start space-x-2 text-xs text-rose-700"
+              >
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <span>{serverError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 space-y-4">
               <Input
                 label="Institutional Email"
                 type="email"
+                autoComplete="email"
                 placeholder="name@aktu.ac.in"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                error={errors.email}
+                error={errors.email?.message}
                 icon={Mail}
-                required
+                disabled={isSubmitting}
+                {...register('email')}
               />
 
               <Input
                 label="Password"
                 type="password"
+                autoComplete="current-password"
                 placeholder="••••••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                error={errors.password}
+                error={errors.password?.message}
                 icon={Lock}
-                required
+                disabled={isSubmitting}
+                {...register('password')}
               />
 
-              <div className="flex items-center justify-between text-xs pt-1">
-                <label className="flex items-center text-slate-600 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300 mr-2"
-                  />
-                  Remember session
-                </label>
+              <div className="flex items-center justify-end text-xs pt-1">
                 <a
                   href="#forgot-password"
                   onClick={(e) => {
@@ -183,48 +217,21 @@ export const Login = () => {
                   type="submit"
                   variant="primary"
                   size="md"
-                  isLoading={isLoading}
+                  isLoading={isSubmitting}
+                  disabled={isSubmitting}
                   icon={ArrowRight}
                   iconPosition="right"
                   className="w-full font-semibold shadow-md"
                 >
-                  Sign In to Dashboard
+                  {isSubmitting ? 'Signing In...' : 'Sign In to Dashboard'}
                 </Button>
               </div>
             </form>
 
-            {/* Development Quick Role Switcher (Clearly marked as Dev Preview as per Phase 2 Section 9) */}
-            <div className="mt-6 pt-5 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500 mr-1" /> Quick Preview Personas
-                </span>
-                <span className="text-[10px] text-slate-400 italic">Phase 2 Preview</span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickSelect('admin@aktu.ac.in', 'AdminPassword@123')}
-                  className="py-1.5 px-2 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 transition text-center border border-slate-200/80"
-                >
-                  Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickSelect('faculty@aktu.ac.in', 'FacultyPassword@123')}
-                  className="py-1.5 px-2 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 transition text-center border border-slate-200/80"
-                >
-                  Faculty
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickSelect('student@aktu.ac.in', 'StudentPassword@123')}
-                  className="py-1.5 px-2 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-sky-50 hover:text-sky-700 text-slate-700 transition text-center border border-slate-200/80"
-                >
-                  Student
-                </button>
-              </div>
+            <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+              <p className="text-[11px] text-slate-500">
+                Access is restricted to provisioned institutional accounts.
+              </p>
             </div>
           </div>
         </div>

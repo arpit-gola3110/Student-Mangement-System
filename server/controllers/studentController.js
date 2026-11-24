@@ -47,7 +47,7 @@ export const createStudent = async (req, res, next) => {
     const user = await User.create({
       email: email.toLowerCase(),
       password: password || 'Student@123',
-      role: 'STUDENT'
+      role: 'student'
     });
 
     const student = await Student.create({
@@ -71,7 +71,7 @@ export const createStudent = async (req, res, next) => {
 export const getStudentById = async (req, res, next) => {
   try {
     // If student role, enforce reading only self
-    if (req.user.role === 'STUDENT' && req.user.profileId !== req.params.id) {
+    if (req.user.role === 'student' && req.user.profileId !== req.params.id) {
       return sendError(res, 'Access denied: cannot view records of another student', null, 403);
     }
 

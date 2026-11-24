@@ -15,7 +15,7 @@ import {
 
 export const Sidebar = () => {
   const { user } = useAuth();
-  const role = user?.role;
+  const role = (user?.role || '').toLowerCase();
 
   const adminLinks = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -42,7 +42,7 @@ export const Sidebar = () => {
     { to: '/announcements', icon: Bell, label: 'Notice Board' }
   ];
 
-  const links = role === 'ADMIN' ? adminLinks : role === 'FACULTY' ? facultyLinks : studentLinks;
+  const links = role === 'admin' ? adminLinks : role === 'faculty' ? facultyLinks : studentLinks;
 
   return (
     <aside className="w-64 bg-slate-900 text-white flex flex-col shrink-0 min-h-screen">

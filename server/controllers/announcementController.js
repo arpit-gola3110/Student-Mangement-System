@@ -3,11 +3,11 @@ import { sendSuccess, sendError } from '../utils/responseHandler.js';
 
 export const getAnnouncements = async (req, res, next) => {
   try {
-    const role = req.user.role;
+    const role = (req.user.role || '').toLowerCase();
     const query = {
       $or: [
         { targetAudience: 'ALL' },
-        { targetAudience: role === 'STUDENT' ? 'STUDENTS' : 'FACULTY' }
+        { targetAudience: role === 'student' ? 'STUDENTS' : 'FACULTY' }
       ]
     };
 

@@ -31,7 +31,7 @@ export const createFaculty = async (req, res, next) => {
     const user = await User.create({
       email: email.toLowerCase(),
       password: password || 'Faculty@123',
-      role: 'FACULTY'
+      role: 'faculty'
     });
 
     const faculty = await Faculty.create({
@@ -51,7 +51,7 @@ export const createFaculty = async (req, res, next) => {
 
 export const getFacultyAssignments = async (req, res, next) => {
   try {
-    const facultyId = req.query.facultyId || (req.user.role === 'FACULTY' ? req.user.profileId : null);
+    const facultyId = req.query.facultyId || (req.user.role === 'faculty' ? req.user.profileId : null);
     const filter = facultyId ? { faculty: facultyId } : {};
 
     const assignments = await FacultyAssignment.find(filter)

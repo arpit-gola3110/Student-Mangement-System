@@ -1,102 +1,123 @@
-import User from '../models/User.js';
-import Student from '../models/Student.js';
-import Faculty from '../models/Faculty.js';
-import { generateToken } from '../utils/tokenGenerator.js';
-import { sendSuccess, sendError } from '../utils/responseHandler.js';
+import env from '../config/env.js';
+import AuditLog from '../models/AuditLog.js';
+import ApiResponse from '../utils/apiResponse.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { issueCsrfToken } from '../middleware/csrfMiddleware.js';
+import { verifyAuthToken } from '../utils/tokenGenerator.js';
+import { setAuthCookie, clearAuthCookie } from '../utils/authCookies.js';
+import * as authService from '../services/authService.js';
 
-export const login = async (req, res, next) => {
+const recordAuthAudit = async ({ actor, actorRole, action, req, details = {} }) => {
+  if (!actor) return;
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return sendError(res, 'Please provide both email and password', null, 400);
-    }
-
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user || !user.isActive) {
-      return sendError(res, 'Invalid credentials or account suspended', null, 401);
-    }
-
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return sendError(res, 'Invalid credentials', null, 401);
-    }
-
-    user.lastLogin = new Date();
-    await user.save();
-
-    let profile = null;
-    if (user.role === 'STUDENT') {
-      profile = await Student.findOne({ user: user._id }).populate('department');
-    } else if (user.role === 'FACULTY') {
-      profile = await Faculty.findOne({ user: user._id }).populate('department');
-    }
-
-    const token = generateToken({
-      userId: user._id,
-      role: user.role,
-      profileId: profile?._id || null
+    await AuditLog.create({
+      actor,
+      actorRole: (actorRole || 'student').toUpperCase(),
+      action,
+      entity: 'User',
+      entityId: actor,
+      ipAddress: req.ip || req.socket?.remoteAddress || '127.0.0.1',
+      details
     });
+  } catch (err) {
+    console.error('[Auth Audit Error]', err.message);
+  }
+};
 
-    return sendSuccess(res, 'Login successful', {
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        profile
+/**
+ * GET /api/v1/auth/csrf-token
+ * Initializes CSRF double-submit cookie and returns token for frontend submission.
+ */
+export const getCsrfToken = (req, res) => {
+  const csrfToken = issueCsrfToken(req, res);
+  return ApiResponse.success(res, { csrfToken }, 'CSRF token initialized');
+};
+
+/**
+ * POST /api/v1/auth/login
+ * Authenticates credentials, sets HttpOnly JWT cookie, rotates CSRF token,
+ * and returns safe user profile without password hash or JWT in JSON.
+ */
+export const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const { token, user } = await authService.authenticateUser(email, password);
+
+  setAuthCookie(res, token);
+  issueCsrfToken(req, res, true);
+
+  await recordAuthAudit({
+    actor: user.id,
+    actorRole: user.role,
+    action: 'LOGIN',
+    req,
+    details: { method: 'cookie-jwt' }
+  });
+
+  return ApiResponse.success(res, { user }, 'Login successful');
+});
+
+/**
+ * POST /api/v1/auth/logout
+ * Clears HttpOnly cookie, increments user tokenVersion to revoke copied JWTs,
+ * and rotates CSRF token cleanly.
+ */
+export const logout = asyncHandler(async (req, res) => {
+  const token = req.cookies?.[env.COOKIE_NAME];
+
+  if (token) {
+    try {
+      const decoded = verifyAuthToken(token);
+      if (decoded?.sub) {
+        await authService.revokeUserSessions(decoded.sub);
+        await recordAuthAudit({
+          actor: decoded.sub,
+          actorRole: req.user?.role || 'user',
+          action: 'LOGOUT',
+          req
+        });
       }
-    });
-  } catch (error) {
-    next(error);
+    } catch {
+      // Token may already be expired or invalid; continue clearing cookies cleanly
+    }
   }
-};
 
-export const getMe = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user.userId).select('-password');
-    if (!user) {
-      return sendError(res, 'User not found', null, 404);
-    }
+  clearAuthCookie(res);
+  issueCsrfToken(req, res, true);
 
-    let profile = null;
-    if (user.role === 'STUDENT') {
-      profile = await Student.findOne({ user: user._id }).populate('department');
-    } else if (user.role === 'FACULTY') {
-      profile = await Faculty.findOne({ user: user._id }).populate('department');
-    }
+  return ApiResponse.success(res, {}, 'Logged out successfully');
+});
 
-    return sendSuccess(res, 'Current session retrieved', {
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        profile
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+/**
+ * GET /api/v1/auth/me
+ * Returns current authenticated user profile from database.
+ */
+export const getMe = asyncHandler(async (req, res) => {
+  const user = await authService.getCurrentUserProfile(req.user.id);
+  return ApiResponse.success(res, { user }, 'Current session retrieved');
+});
 
-export const changePassword = async (req, res, next) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
-      return sendError(res, 'Both current and new passwords are required', null, 400);
-    }
+/**
+ * POST /api/v1/auth/change-password
+ * Verifies current password, hashes new password, increments tokenVersion,
+ * and updates current session cookie so old tokens become invalid.
+ */
+export const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const { token, role } = await authService.updateUserPassword(
+    req.user.id,
+    currentPassword,
+    newPassword
+  );
 
-    const user = await User.findById(req.user.userId);
-    const isMatch = await user.comparePassword(currentPassword);
-    if (!isMatch) {
-      return sendError(res, 'Current password incorrect', null, 401);
-    }
+  setAuthCookie(res, token);
 
-    user.password = newPassword;
-    await user.save();
+  await recordAuthAudit({
+    actor: req.user.id,
+    actorRole: role,
+    action: 'UPDATE',
+    req,
+    details: { field: 'password' }
+  });
 
-    return sendSuccess(res, 'Password updated successfully');
-  } catch (error) {
-    next(error);
-  }
-};
+  return ApiResponse.success(res, {}, 'Password updated successfully');
+});

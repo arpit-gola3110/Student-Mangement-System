@@ -28,7 +28,7 @@ import {
 
 export const Sidebar = ({ isCollapsed, onToggleCollapse, isMobileOpen, onCloseMobile }) => {
   const { user } = useAuth();
-  const role = user?.role || 'ADMIN';
+  const role = (user?.role || 'student').toLowerCase();
 
   // Complete, official menu configurations for all 3 roles from Phase 2 Section 5
   const adminSections = [
@@ -105,7 +105,7 @@ export const Sidebar = ({ isCollapsed, onToggleCollapse, isMobileOpen, onCloseMo
     }
   ];
 
-  const sections = role === 'ADMIN' ? adminSections : role === 'FACULTY' ? facultySections : studentSections;
+  const sections = role === 'admin' ? adminSections : role === 'faculty' ? facultySections : studentSections;
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-slate-900 text-white select-none">
@@ -121,7 +121,7 @@ export const Sidebar = ({ isCollapsed, onToggleCollapse, isMobileOpen, onCloseMo
                 AKTU SMS
               </span>
               <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase">
-                {role} PORTAL
+                {role.toUpperCase()} PORTAL
               </span>
             </div>
           )}

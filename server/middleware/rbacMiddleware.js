@@ -1,15 +1,34 @@
-import { sendError } from '../utils/responseHandler.js';
+import ApiError from '../utils/ApiError.js';
 
-export const requireRoles = (allowedRoles = []) => {
+/**
+ * Role-Based Access Control (RBAC) authorization middleware.
+ * Accepts either spread roles `authorizeRoles('admin', 'faculty')`
+ * or an array `requireRoles(['admin', 'faculty'])`.
+ * Normalizes all roles to lowercase.
+ */
+export const authorizeRoles = (...allowedRoles) => {
+  const normalizedAllowed = allowedRoles
+    .flat()
+    .filter(Boolean)
+    .map((role) => role.toString().toLowerCase());
+
   return (req, res, next) => {
     if (!req.user) {
-      return sendError(res, 'User identity not established', null, 401);
+      return next(ApiError.unauthorized('User identity not established'));
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
-      return sendError(res, `Access forbidden: requires one of [${allowedRoles.join(', ')}]`, null, 403);
+    const userRole = (req.user.role || '').toString().toLowerCase();
+    if (!normalizedAllowed.includes(userRole)) {
+      return next(
+        ApiError.forbidden(`Access forbidden: requires one of [${normalizedAllowed.join(', ')}]`)
+      );
     }
 
-    next();
+    return next();
   };
 };
+
+// Backward-compatible alias used in Phase 3 routes
+export const requireRoles = (allowedRoles = []) => authorizeRoles(allowedRoles);
+
+export default authorizeRoles;

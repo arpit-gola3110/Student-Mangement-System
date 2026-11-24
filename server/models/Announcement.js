@@ -14,16 +14,19 @@ const announcementSchema = new mongoose.Schema(
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true
+      required: true,
+      index: true
     },
     targetAudience: {
       type: String,
       enum: ['ALL', 'FACULTY', 'STUDENTS', 'DEPARTMENT'],
-      default: 'ALL'
+      default: 'ALL',
+      uppercase: true
     },
     targetDepartment: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Department'
+      ref: 'Department',
+      index: true
     },
     expiresAt: {
       type: Date
@@ -35,5 +38,9 @@ const announcementSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Query indexes for feed retrieval
+announcementSchema.index({ targetAudience: 1, createdAt: -1 });
+announcementSchema.index({ expiresAt: 1 });
 
 export default mongoose.model('Announcement', announcementSchema);

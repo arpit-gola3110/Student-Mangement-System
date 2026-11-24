@@ -53,7 +53,7 @@ export const getStudentAttendanceSummary = async (req, res, next) => {
   try {
     const studentId = req.params.studentId || req.user.profileId;
 
-    if (req.user.role === 'STUDENT' && req.user.profileId !== studentId) {
+    if (req.user.role === 'student' && req.user.profileId !== studentId) {
       return sendError(res, 'Forbidden: cannot access another student records', null, 403);
     }
 

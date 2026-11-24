@@ -5,19 +5,24 @@ const auditLogSchema = new mongoose.Schema(
     actor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true
+      required: true,
+      index: true
     },
     actorRole: {
       type: String,
-      required: true
+      required: true,
+      uppercase: true
     },
     action: {
       type: String,
-      required: true // 'CREATE', 'UPDATE', 'DELETE', 'LOGIN', etc.
+      required: true,
+      enum: ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'OVERRIDE'],
+      uppercase: true
     },
     entity: {
       type: String,
-      required: true // 'Student', 'Attendance', etc.
+      required: true,
+      index: true
     },
     entityId: {
       type: mongoose.Schema.Types.ObjectId
@@ -31,12 +36,16 @@ const auditLogSchema = new mongoose.Schema(
     },
     timestamp: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      index: true
     }
   },
   { timestamps: false }
 );
 
+// Indexes for audit search and compliance reporting
 auditLogSchema.index({ timestamp: -1 });
+auditLogSchema.index({ actor: 1, timestamp: -1 });
+auditLogSchema.index({ entity: 1, entityId: 1 });
 
 export default mongoose.model('AuditLog', auditLogSchema);

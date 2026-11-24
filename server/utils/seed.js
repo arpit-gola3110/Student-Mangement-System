@@ -38,7 +38,7 @@ const seed = async () => {
     const adminUser = await User.create({
       email: 'admin@aktu.ac.in',
       password: 'AdminPassword@123',
-      role: 'ADMIN'
+      role: 'admin'
     });
     console.log('[Seed] Admin user created: admin@aktu.ac.in');
 
@@ -91,7 +91,7 @@ const seed = async () => {
     const facultyUser = await User.create({
       email: 'faculty@aktu.ac.in',
       password: 'FacultyPassword@123',
-      role: 'FACULTY'
+      role: 'faculty'
     });
 
     const faculty = await Faculty.create({
@@ -118,7 +118,7 @@ const seed = async () => {
     const studentUser = await User.create({
       email: 'student@aktu.ac.in',
       password: 'StudentPassword@123',
-      role: 'STUDENT'
+      role: 'student'
     });
 
     const student = await Student.create({

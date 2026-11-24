@@ -7,7 +7,8 @@ const departmentSchema = new mongoose.Schema(
       required: [true, 'Department code is required'],
       unique: true,
       uppercase: true,
-      trim: true
+      trim: true,
+      index: true
     },
     name: {
       type: String,
@@ -21,6 +22,10 @@ const departmentSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true
+    },
+    isActive: {
+      type: Boolean,
+      default: true
     }
   },
   { timestamps: true }

@@ -19,7 +19,7 @@ export const Unauthorized = () => {
         Unauthorized Access
       </h1>
       <p className="text-sm text-slate-500 mt-2 max-w-md leading-relaxed">
-        Your current session ({user?.role || 'Guest'}) lacks the necessary security clearance to view or modify this resource.
+        Your current session ({user?.role ? user.role.toUpperCase() : 'GUEST'}) lacks the necessary security clearance to view or modify this resource.
       </p>
 
       <div className="mt-8 flex items-center space-x-3">

@@ -29,10 +29,13 @@ const queryClient = new QueryClient({
 
 // Root Redirector based on authenticated role
 const RootRedirect = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
-  if (user.role === 'FACULTY') return <Navigate to="/faculty/dashboard" replace />;
+
+  const role = (user.role || '').toLowerCase();
+  if (role === 'admin') return <Navigate to="/admin/dashboard" replace />;
+  if (role === 'faculty') return <Navigate to="/faculty/dashboard" replace />;
   return <Navigate to="/student/dashboard" replace />;
 };
 
@@ -52,7 +55,7 @@ export function App() {
                   <Route path="/" element={<RootRedirect />} />
 
                   {/* ADMIN ROUTE GROUP */}
-                  <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                     <Route path="/admin/dashboard" element={<AdminDashboard />} />
                     <Route path="/admin/students" element={<StudentDashboard />} />
                     <Route path="/admin/faculty" element={<FacultyDashboard />} />
@@ -73,7 +76,7 @@ export function App() {
                   </Route>
 
                   {/* FACULTY ROUTE GROUP */}
-                  <Route element={<ProtectedRoute allowedRoles={['FACULTY', 'ADMIN']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['faculty', 'admin']} />}>
                     <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
                     <Route path="/faculty/subjects" element={<FacultyDashboard />} />
                     <Route path="/faculty/students" element={<FacultyDashboard />} />
@@ -85,7 +88,7 @@ export function App() {
                   </Route>
 
                   {/* STUDENT ROUTE GROUP */}
-                  <Route element={<ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']} />}>
+                  <Route element={<ProtectedRoute allowedRoles={['student', 'admin']} />}>
                     <Route path="/student/dashboard" element={<StudentDashboard />} />
                     <Route path="/student/profile" element={<StudentDashboard />} />
                     <Route path="/student/courses" element={<StudentDashboard />} />

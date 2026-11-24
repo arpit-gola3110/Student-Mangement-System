@@ -7,7 +7,8 @@ const subjectSchema = new mongoose.Schema(
       required: [true, 'Subject code is required'],
       unique: true,
       uppercase: true,
-      trim: true
+      trim: true,
+      index: true
     },
     name: {
       type: String,
@@ -17,12 +18,14 @@ const subjectSchema = new mongoose.Schema(
     course: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Course',
-      required: [true, 'Course reference is required']
+      required: [true, 'Course reference is required'],
+      index: true
     },
     semester: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Semester',
-      required: [true, 'Semester reference is required']
+      required: [true, 'Semester reference is required'],
+      index: true
     },
     credits: {
       type: Number,
@@ -34,7 +37,12 @@ const subjectSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: ['THEORY', 'PRACTICAL', 'ELECTIVE', 'PROJECT'],
-      default: 'THEORY'
+      default: 'THEORY',
+      uppercase: true
+    },
+    isActive: {
+      type: Boolean,
+      default: true
     }
   },
   { timestamps: true }

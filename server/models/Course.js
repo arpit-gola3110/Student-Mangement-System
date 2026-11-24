@@ -7,7 +7,8 @@ const courseSchema = new mongoose.Schema(
       required: [true, 'Course code is required'],
       unique: true,
       uppercase: true,
-      trim: true
+      trim: true,
+      index: true
     },
     name: {
       type: String,
@@ -17,7 +18,8 @@ const courseSchema = new mongoose.Schema(
     department: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Department',
-      required: [true, 'Department reference is required']
+      required: [true, 'Department reference is required'],
+      index: true
     },
     durationYears: {
       type: Number,
@@ -28,6 +30,10 @@ const courseSchema = new mongoose.Schema(
       type: Number,
       required: true,
       default: 8
+    },
+    isActive: {
+      type: Boolean,
+      default: true
     }
   },
   { timestamps: true }

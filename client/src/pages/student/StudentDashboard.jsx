@@ -1,110 +1,174 @@
-import React, { useEffect, useState } from 'react';
-import api from '../../services/api';
-import MetricCard from '../../components/common/MetricCard';
-import { CalendarCheck, Award, BookOpen, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import React from 'react';
+import PageHeader from '../../components/layout/PageHeader';
+import StatCard from '../../components/data/StatCard';
+import ChartCard from '../../components/data/ChartCard';
+import DataTable from '../../components/data/DataTable';
+import Badge from '../../components/common/Badge';
+import Button from '../../components/common/Button';
+import { useToast } from '../../context/ToastContext';
+import {
+  CalendarCheck,
+  Award,
+  BookOpen,
+  AlertTriangle,
+  Download,
+  Calendar,
+  CheckCircle2
+} from 'lucide-react';
 
 export const StudentDashboard = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
-  useEffect(() => {
-    const fetchStudentData = async () => {
-      try {
-        const res = await api.get('/dashboards/student');
-        setData(res.data);
-      } catch (err) {
-        setData({
-          attendancePercentage: 82.5,
-          isDefaulter: false,
-          totalClasses: 40,
-          classesAttended: 33,
-          student: {
-            rollNumber: '2200270100045',
-            currentSemester: 5,
-            department: { name: 'Computer Science & Engineering' }
-          }
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStudentData();
-  }, []);
+  const attendanceRate = 83.4;
+  const isDefaulter = attendanceRate < 75;
 
-  if (loading) {
-    return <div className="animate-pulse space-y-4"><div className="h-32 bg-slate-200 rounded-xl"></div></div>;
-  }
+  const stats = [
+    {
+      title: 'Cumulative Attendance',
+      value: `${attendanceRate}%`,
+      icon: CalendarCheck,
+      trend: isDefaulter ? 'down' : 'up',
+      trendValue: isDefaulter ? 'Shortage Warning' : 'Eligible',
+      color: isDefaulter ? 'rose' : 'emerald',
+      subtitle: '45 of 54 classes attended'
+    },
+    {
+      title: 'Current SGPA',
+      value: '8.42',
+      icon: Award,
+      trend: 'up',
+      trendValue: 'A Grade',
+      color: 'indigo',
+      subtitle: 'AKTU 10-Point Credit System'
+    },
+    {
+      title: 'Enrolled Courses',
+      value: '5 Subjects',
+      icon: BookOpen,
+      color: 'sky',
+      subtitle: '21 Total Credits this term'
+    }
+  ];
 
-  const attendancePct = data?.attendancePercentage || 82.5;
-  const isDefaulter = attendancePct < 75;
+  const subjectProgress = [
+    { code: 'BCS-554', name: 'Mini Project / Internship Assessment', credits: 2, attended: 18, total: 20, pct: 90.0, status: 'NORMAL' },
+    { code: 'BCS-501', name: 'Database Management Systems', credits: 4, attended: 26, total: 32, pct: 81.25, status: 'NORMAL' },
+    { code: 'BCS-502', name: 'Compiler Design', credits: 4, attended: 22, total: 28, pct: 78.57, status: 'BORDERLINE' },
+    { code: 'BCS-503', name: 'Design and Analysis of Algorithms', credits: 4, attended: 28, total: 30, pct: 93.33, status: 'NORMAL' },
+    { code: 'BCS-551', name: 'DBMS Laboratory', credits: 1, attended: 14, total: 14, pct: 100.0, status: 'NORMAL' }
+  ];
+
+  const announcements = [
+    {
+      id: '1',
+      title: 'BCS 554 Mini Project Weekly Review Schedule',
+      date: 'Nov 24, 2026',
+      author: 'Dept of Computer Science',
+      content: 'Scholars are instructed to demonstrate their Phase 2 UI/UX design system and frontend prototypes to the guide on Friday.'
+    },
+    {
+      id: '2',
+      title: 'AKTU 75% Attendance Regulatory Compliance Warning',
+      date: 'Nov 20, 2026',
+      author: 'Office of the Dean',
+      content: 'Any student falling below 75% aggregate attendance will be debarred from writing semester theory examinations.'
+    }
+  ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Student Academic Hub</h1>
-        <p className="text-sm text-slate-500">
-          Roll No: <span className="font-semibold text-slate-700">{data?.student?.rollNumber || '2200270100045'}</span> •{' '}
-          {data?.student?.department?.name || 'Computer Science & Engineering'} • Semester {data?.student?.currentSemester || 5}
-        </p>
-      </div>
+    <div className="space-y-6 sm:space-y-8">
+      <PageHeader
+        title="Student Self-Service Portal"
+        subtitle="Arpit Gola • Roll No: 2200270100045 • B.Tech CSE Semester 5 (2026–27)"
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Download}
+            onClick={() => showToast('Downloading unofficial academic grade sheet', 'info')}
+          >
+            Download Grade Sheet
+          </Button>
+        }
+      />
 
+      {/* Debarment Warning Banner if attendance < 75% */}
       {isDefaulter && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-xl flex items-center space-x-3">
-          <AlertTriangle className="w-6 h-6 text-rose-600 shrink-0" />
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start space-x-3.5 shadow-sm">
+          <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
           <div className="text-sm">
-            <span className="font-bold">AKTU 75% Attendance Shortage Alert:</span> Your aggregate attendance is {attendancePct}%, below the required 75% threshold. Please meet your faculty advisor.
+            <h4 className="font-bold">AKTU 75% Attendance Shortage Alert</h4>
+            <p className="mt-0.5 leading-relaxed">
+              Your cumulative attendance is currently at {attendanceRate}%, which falls below the mandatory 75% threshold required by AKTU ordinance. Please meet your faculty advisor immediately.
+            </p>
           </div>
         </div>
       )}
 
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <MetricCard
-          title="Attendance Percentage"
-          value={`${attendancePct}%`}
-          icon={CalendarCheck}
-          change={`${data?.classesAttended || 33} of ${data?.totalClasses || 40} classes`}
-          color={isDefaulter ? 'rose' : 'emerald'}
-          trend={isDefaulter ? 'down' : 'up'}
-        />
-        <MetricCard
-          title="Current Semester SGPA"
-          value="8.42"
-          icon={Award}
-          change="Grade: A (Excellent)"
-          color="indigo"
-          trend="up"
-        />
-        <MetricCard
-          title="Enrolled Subjects"
-          value="6 Courses"
-          icon={BookOpen}
-          change="22 AKTU Credits"
-          color="amber"
-        />
+        {stats.map((s, idx) => (
+          <StatCard key={idx} {...s} />
+        ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-        <h2 className="text-base font-semibold text-slate-900 mb-4">Subject-Wise Attendance Snapshot</h2>
-        <div className="space-y-4">
+      {/* Subject-Wise Attendance Breakdown */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="flex justify-between text-sm font-medium mb-1.5">
-              <span>BCS 554 • Mini Project / Internship Assessment</span>
-              <span className="text-emerald-600 font-bold">90.0% (Present)</span>
-            </div>
-            <div className="w-full bg-slate-100 rounded-full h-2.5">
-              <div className="bg-emerald-500 h-2.5 rounded-full" style={{ width: '90%' }}></div>
-            </div>
+            <h3 className="text-base font-bold text-slate-900 tracking-tight">Subject-Wise Attendance Progress</h3>
+            <p className="text-xs text-slate-500 mt-0.5 font-medium">Classroom attendance tracking across registered curriculum</p>
           </div>
+          <Badge variant="success" size="sm" dot>
+            Overall: {attendanceRate}%
+          </Badge>
+        </div>
 
-          <div>
-            <div className="flex justify-between text-sm font-medium mb-1.5">
-              <span>BCS 501 • Database Management Systems</span>
-              <span className="text-indigo-600 font-bold">81.5% (Present)</span>
+        <div className="space-y-5">
+          {subjectProgress.map((sub) => (
+            <div key={sub.code} className="space-y-1.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs">
+                <div className="font-bold text-slate-800">
+                  <span className="font-mono text-brand-700 mr-2">{sub.code}</span>
+                  <span>{sub.name}</span>
+                  <span className="text-slate-400 font-normal ml-2">({sub.credits} Credits)</span>
+                </div>
+                <div className="text-slate-600 font-medium">
+                  {sub.attended}/{sub.total} classes •{' '}
+                  <strong className={sub.pct >= 75 ? 'text-emerald-600' : 'text-rose-600'}>
+                    {sub.pct}%
+                  </strong>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className={`h-2.5 rounded-full transition-all duration-500 ${
+                    sub.pct >= 85 ? 'bg-emerald-500' : sub.pct >= 75 ? 'bg-brand-500' : 'bg-rose-500'
+                  }`}
+                  style={{ width: `${sub.pct}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full bg-slate-100 rounded-full h-2.5">
-              <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: '81.5%' }}></div>
+          ))}
+        </div>
+      </div>
+
+      {/* Announcements Feed */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold text-slate-900 tracking-tight">Official Campus Notices</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {announcements.map((a) => (
+            <div key={a.id} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
+              <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+                <span className="font-semibold text-brand-600">{a.author}</span>
+                <span className="flex items-center"><Calendar className="w-3.5 h-3.5 mr-1" /> {a.date}</span>
+              </div>
+              <h4 className="text-sm font-bold text-slate-900">{a.title}</h4>
+              <p className="text-xs text-slate-600 mt-2 leading-relaxed">{a.content}</p>
             </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>

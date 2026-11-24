@@ -23,6 +23,7 @@ export const resolveUserProfile = async (user) => {
  */
 export const formatSafeUser = (user, profile = null) => ({
   id: user._id.toString(),
+  name: user.name || (profile ? `${profile.firstName} ${profile.lastName}`.trim() : user.email?.split('@')[0]),
   email: user.email,
   role: (user.role || 'student').toLowerCase(),
   isActive: user.isActive,

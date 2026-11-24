@@ -51,6 +51,16 @@ const studentSchema = new mongoose.Schema(
       required: true,
       index: true
     },
+    course: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Course',
+      index: true
+    },
+    semester: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Semester',
+      index: true
+    },
     contactNumber: {
       type: String,
       required: true,
@@ -65,14 +75,24 @@ const studentSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 1,
-      max: 8,
+      max: 10,
       default: 1
+    },
+    admissionYear: {
+      type: Number,
+      min: 2000,
+      max: 2100
+    },
+    academicYear: {
+      type: String,
+      trim: true
     },
     status: {
       type: String,
       enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'GRADUATED'],
       uppercase: true,
-      default: 'ACTIVE'
+      default: 'ACTIVE',
+      index: true
     }
   },
   {
@@ -82,8 +102,9 @@ const studentSchema = new mongoose.Schema(
   }
 );
 
-// Compound index for department and semester cohort queries
+// Compound indexes for department, course, and semester cohort queries
 studentSchema.index({ department: 1, currentSemester: 1 });
+studentSchema.index({ course: 1, semester: 1 });
 
 // Full name virtual helper
 studentSchema.virtual('fullName').get(function () {

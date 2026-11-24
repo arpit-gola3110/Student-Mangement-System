@@ -9,6 +9,9 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 // Pages
 import Login from './pages/auth/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import UserManagement from './pages/admin/UserManagement';
+import StudentManagement from './pages/admin/StudentManagement';
+import FacultyManagement from './pages/admin/FacultyManagement';
 import FacultyDashboard from './pages/faculty/FacultyDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
 import AttendanceMarking from './pages/attendance/AttendanceMarking';
@@ -57,8 +60,8 @@ export function App() {
                   {/* ADMIN ROUTE GROUP */}
                   <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                     <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                    <Route path="/admin/students" element={<StudentDashboard />} />
-                    <Route path="/admin/faculty" element={<FacultyDashboard />} />
+                    <Route path="/admin/students" element={<StudentManagement />} />
+                    <Route path="/admin/faculty" element={<FacultyManagement />} />
                     <Route path="/admin/departments" element={<DepartmentList />} />
                     <Route path="/admin/courses" element={<DepartmentList />} />
                     <Route path="/admin/semesters" element={<DepartmentList />} />
@@ -70,7 +73,7 @@ export function App() {
                     <Route path="/admin/results" element={<StudentResults />} />
                     <Route path="/admin/announcements" element={<AnnouncementList />} />
                     <Route path="/admin/reports" element={<AdminDashboard />} />
-                    <Route path="/admin/users" element={<AdminDashboard />} />
+                    <Route path="/admin/users" element={<UserManagement />} />
                     <Route path="/admin/audit-logs" element={<AdminDashboard />} />
                     <Route path="/admin/settings" element={<AdminDashboard />} />
                   </Route>

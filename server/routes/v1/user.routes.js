@@ -1,28 +1,41 @@
 import express from 'express';
 import { protect } from '../../middleware/authMiddleware.js';
 import { authorizeRoles } from '../../middleware/rbacMiddleware.js';
-import User from '../../models/User.js';
-import ApiResponse from '../../utils/apiResponse.js';
-import ApiError from '../../utils/ApiError.js';
+import { validateRequest } from '../../middleware/validateRequest.js';
+import { logAuditEvent } from '../../middleware/auditMiddleware.js';
+import {
+  userIdParamSchema,
+  listUsersQuerySchema,
+  createUserSchema,
+  updateUserSchema,
+  updateUserStatusSchema
+} from '../../validators/userValidator.js';
+import * as userCtrl from '../../controllers/userController.js';
 
 const router = express.Router();
 
-router.get('/', protect, authorizeRoles('admin'), async (req, res, next) => {
-  try {
-    const users = await User.find().sort({ createdAt: -1 });
-    return ApiResponse.success(res, users, 'Users retrieved');
-  } catch (err) { next(err); }
-});
+// All User Management operations are strictly restricted to ADMIN
+router.use(protect, authorizeRoles('admin'));
 
-router.get('/:id', protect, async (req, res, next) => {
-  try {
-    if (req.user.role !== 'admin' && req.user.id !== req.params.id) {
-      return next(ApiError.forbidden('Access denied: cannot view another user account'));
-    }
-    const user = await User.findById(req.params.id);
-    if (!user) return ApiResponse.error(res, 'User not found', [], 404);
-    return ApiResponse.success(res, user, 'User details');
-  } catch (err) { next(err); }
-});
+router.get('/', validateRequest({ query: listUsersQuerySchema }), userCtrl.getUsers);
+router.get('/:id', validateRequest({ params: userIdParamSchema }), userCtrl.getUserById);
+router.post(
+  '/',
+  validateRequest({ body: createUserSchema }),
+  logAuditEvent('CREATE', 'User'),
+  userCtrl.createUser
+);
+router.patch(
+  '/:id',
+  validateRequest({ params: userIdParamSchema, body: updateUserSchema }),
+  logAuditEvent('UPDATE', 'User'),
+  userCtrl.updateUser
+);
+router.patch(
+  '/:id/status',
+  validateRequest({ params: userIdParamSchema, body: updateUserStatusSchema }),
+  logAuditEvent('UPDATE', 'User'),
+  userCtrl.updateUserStatus
+);
 
 export default router;

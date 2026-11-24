@@ -40,10 +40,15 @@ const facultySchema = new mongoose.Schema(
       uppercase: true,
       required: true
     },
+    specialization: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     qualification: {
       type: String,
-      required: true,
-      trim: true
+      trim: true,
+      default: ''
     },
     contactNumber: {
       type: String,
@@ -53,6 +58,13 @@ const facultySchema = new mongoose.Schema(
     joiningDate: {
       type: Date,
       default: Date.now
+    },
+    status: {
+      type: String,
+      enum: ['ACTIVE', 'INACTIVE', 'ON_LEAVE', 'RETIRED'],
+      uppercase: true,
+      default: 'ACTIVE',
+      index: true
     }
   },
   {
@@ -61,6 +73,8 @@ const facultySchema = new mongoose.Schema(
     toObject: { virtuals: true }
   }
 );
+
+facultySchema.index({ department: 1, status: 1 });
 
 // Full name virtual helper
 facultySchema.virtual('fullName').get(function () {

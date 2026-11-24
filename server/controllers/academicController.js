@@ -7,7 +7,9 @@ import { sendSuccess, sendError } from '../utils/responseHandler.js';
 // --- DEPARTMENTS ---
 export const getDepartments = async (req, res, next) => {
   try {
-    const departments = await Department.find().populate('headOfDepartment').sort({ name: 1 });
+    const filter = {};
+    if (req.query.isActive === 'true') filter.isActive = { $ne: false };
+    const departments = await Department.find(filter).populate('headOfDepartment').sort({ name: 1 });
     return sendSuccess(res, 'Departments retrieved', departments);
   } catch (err) { next(err); }
 };
@@ -31,7 +33,9 @@ export const updateDepartment = async (req, res, next) => {
 // --- COURSES ---
 export const getCourses = async (req, res, next) => {
   try {
-    const filter = req.query.department ? { department: req.query.department } : {};
+    const filter = {};
+    if (req.query.department) filter.department = req.query.department;
+    if (req.query.isActive === 'true') filter.isActive = { $ne: false };
     const courses = await Course.find(filter).populate('department').sort({ name: 1 });
     return sendSuccess(res, 'Courses retrieved', courses);
   } catch (err) { next(err); }

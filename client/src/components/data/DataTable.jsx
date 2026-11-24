@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import EmptyState from './EmptyState';
+import ErrorState from './ErrorState';
 import LoadingSkeleton from './LoadingSkeleton';
 import Pagination from './Pagination';
 
@@ -8,6 +9,8 @@ export const DataTable = ({
   columns = [],
   data = [],
   isLoading = false,
+  error = null,
+  onRetry,
   searchable = true,
   searchPlaceholder = 'Search records...',
   searchField = 'name',
@@ -16,80 +19,113 @@ export const DataTable = ({
   emptyTitle,
   emptyDescription,
   onRowClick,
+  toolbarExtras = null,
+  // Optional Server-Side Control Props
+  serverSide = false,
+  searchValue = '',
+  onSearchChange,
+  sortColumn: controlledSortColumn = null,
+  sortDirection: controlledSortDirection = 'asc',
+  onSortChange,
+  currentPage: controlledPage = 1,
+  totalPages: controlledTotalPages = 1,
+  totalRecords: controlledTotalRecords = 0,
+  onPageChange,
   className = ''
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortColumn, setSortColumn] = useState(null);
-  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' | 'desc'
-  const [currentPage, setCurrentPage] = useState(1);
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
+  const [localSortColumn, setLocalSortColumn] = useState(null);
+  const [localSortDirection, setLocalSortDirection] = useState('asc');
+  const [localPage, setLocalPage] = useState(1);
 
-  // Filter
+  const activeSearchTerm = serverSide ? searchValue : localSearchTerm;
+  const activeSortColumn = serverSide ? controlledSortColumn : localSortColumn;
+  const activeSortDirection = serverSide ? controlledSortDirection : localSortDirection;
+  const activePage = serverSide ? controlledPage : localPage;
+
+  // Client-side Filter
   const filteredData = useMemo(() => {
-    if (!searchTerm.trim()) return data;
-    const term = searchTerm.toLowerCase();
+    if (serverSide || !localSearchTerm.trim()) return data;
+    const term = localSearchTerm.toLowerCase();
     return data.filter((item) => {
       if (searchField && item[searchField]) {
         return String(item[searchField]).toLowerCase().includes(term);
       }
-      return Object.values(item).some((val) =>
-        String(val).toLowerCase().includes(term)
-      );
+      return Object.values(item).some((val) => String(val).toLowerCase().includes(term));
     });
-  }, [data, searchTerm, searchField]);
+  }, [serverSide, data, localSearchTerm, searchField]);
 
-  // Sort
+  // Client-side Sort
   const sortedData = useMemo(() => {
-    if (!sortColumn) return filteredData;
+    if (serverSide || !localSortColumn) return filteredData;
     return [...filteredData].sort((a, b) => {
-      const aVal = a[sortColumn];
-      const bVal = b[sortColumn];
+      const aVal = a[localSortColumn];
+      const bVal = b[localSortColumn];
       if (aVal === bVal) return 0;
       if (aVal == null) return 1;
       if (bVal == null) return -1;
       const res = aVal > bVal ? 1 : -1;
-      return sortDirection === 'asc' ? res : -res;
+      return localSortDirection === 'asc' ? res : -res;
     });
-  }, [filteredData, sortColumn, sortDirection]);
+  }, [serverSide, filteredData, localSortColumn, localSortDirection]);
 
-  // Paginate
-  const totalRecords = sortedData.length;
-  const totalPages = Math.ceil(totalRecords / pageSize) || 1;
-  const paginatedData = useMemo(() => {
-    if (!pagination) return sortedData;
-    const start = (currentPage - 1) * pageSize;
+  // Client-side Paginate
+  const totalRecords = serverSide ? controlledTotalRecords : sortedData.length;
+  const totalPages = serverSide ? controlledTotalPages : Math.ceil(totalRecords / pageSize) || 1;
+  const displayData = useMemo(() => {
+    if (serverSide || !pagination) return sortedData;
+    const start = (localPage - 1) * pageSize;
     return sortedData.slice(start, start + pageSize);
-  }, [sortedData, currentPage, pageSize, pagination]);
+  }, [serverSide, sortedData, localPage, pageSize, pagination]);
 
   const handleSort = (key) => {
-    if (sortColumn === key) {
-      if (sortDirection === 'asc') setSortDirection('desc');
+    if (serverSide && onSortChange) {
+      if (activeSortColumn === key) {
+        const nextDir = activeSortDirection === 'asc' ? 'desc' : 'asc';
+        onSortChange(key, nextDir);
+      } else {
+        onSortChange(key, 'asc');
+      }
+      return;
+    }
+
+    if (localSortColumn === key) {
+      if (localSortDirection === 'asc') setLocalSortDirection('desc');
       else {
-        setSortColumn(null);
-        setSortDirection('asc');
+        setLocalSortColumn(null);
+        setLocalSortDirection('asc');
       }
     } else {
-      setSortColumn(key);
-      setSortDirection('asc');
+      setLocalSortColumn(key);
+      setLocalSortDirection('asc');
     }
   };
 
   return (
     <div className={`bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col ${className}`}>
-      {searchable && (
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-4 bg-slate-50/50">
-          <div className="relative w-full max-w-sm">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder={searchPlaceholder}
-              className="w-full pl-9 pr-3.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition"
-            />
-          </div>
+      {(searchable || toolbarExtras) && (
+        <div className="p-4 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-slate-50/50">
+          {searchable && (
+            <div className="relative w-full lg:max-w-sm">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={activeSearchTerm}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (serverSide && onSearchChange) {
+                    onSearchChange(val);
+                  } else {
+                    setLocalSearchTerm(val);
+                    setLocalPage(1);
+                  }
+                }}
+                placeholder={searchPlaceholder}
+                className="w-full pl-9 pr-3.5 py-2 text-xs rounded-lg border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition"
+              />
+            </div>
+          )}
+          {toolbarExtras && <div className="flex flex-wrap items-center gap-2.5">{toolbarExtras}</div>}
         </div>
       )}
 
@@ -98,19 +134,26 @@ export const DataTable = ({
           <thead>
             <tr className="bg-slate-50/80 border-b border-slate-200/70 text-slate-500 text-[11px] font-semibold uppercase tracking-wider">
               {columns.map((col) => {
-                const isSortable = col.sortable !== false && col.accessor;
+                const sortKey = col.sortKey || col.accessor;
+                const isSortable = col.sortable !== false && Boolean(sortKey);
                 return (
                   <th
                     key={col.header || col.accessor}
-                    onClick={() => isSortable && handleSort(col.accessor)}
-                    className={`py-3 px-4 ${isSortable ? 'cursor-pointer select-none hover:text-slate-900 transition-colors' : ''} ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'}`}
+                    onClick={() => isSortable && handleSort(sortKey)}
+                    className={`py-3 px-4 whitespace-nowrap ${
+                      isSortable ? 'cursor-pointer select-none hover:text-slate-900 transition-colors' : ''
+                    } ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'}`}
                   >
-                    <div className={`inline-flex items-center space-x-1 ${col.align === 'right' ? 'justify-end' : col.align === 'center' ? 'justify-center' : ''}`}>
+                    <div
+                      className={`inline-flex items-center space-x-1 ${
+                        col.align === 'right' ? 'justify-end' : col.align === 'center' ? 'justify-center' : ''
+                      }`}
+                    >
                       <span>{col.header}</span>
                       {isSortable && (
                         <span className="text-slate-400">
-                          {sortColumn === col.accessor ? (
-                            sortDirection === 'asc' ? (
+                          {activeSortColumn === sortKey ? (
+                            activeSortDirection === 'asc' ? (
                               <ChevronUp className="w-3.5 h-3.5 text-brand-600" />
                             ) : (
                               <ChevronDown className="w-3.5 h-3.5 text-brand-600" />
@@ -134,14 +177,24 @@ export const DataTable = ({
                   <LoadingSkeleton variant="table" count={4} />
                 </td>
               </tr>
-            ) : paginatedData.length === 0 ? (
+            ) : error ? (
+              <tr>
+                <td colSpan={columns.length} className="p-6">
+                  <ErrorState
+                    title="Failed to load records"
+                    message={typeof error === 'string' ? error : error?.message || 'Unable to fetch data from server.'}
+                    onRetry={onRetry}
+                  />
+                </td>
+              </tr>
+            ) : displayData.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="p-8">
                   <EmptyState title={emptyTitle} description={emptyDescription} />
                 </td>
               </tr>
             ) : (
-              paginatedData.map((row, idx) => (
+              displayData.map((row, idx) => (
                 <tr
                   key={row.id || row._id || idx}
                   onClick={() => onRowClick && onRowClick(row)}
@@ -150,7 +203,9 @@ export const DataTable = ({
                   {columns.map((col) => (
                     <td
                       key={col.header || col.accessor}
-                      className={`py-3.5 px-4 text-slate-700 ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'}`}
+                      className={`py-3.5 px-4 text-slate-700 ${
+                        col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
+                      }`}
                     >
                       {col.render ? col.render(row) : row[col.accessor]}
                     </td>
@@ -162,13 +217,16 @@ export const DataTable = ({
         </table>
       </div>
 
-      {pagination && !isLoading && totalRecords > 0 && (
+      {pagination && !isLoading && !error && totalRecords > 0 && (
         <Pagination
-          currentPage={currentPage}
+          currentPage={activePage}
           totalPages={totalPages}
           totalRecords={totalRecords}
           pageSize={pageSize}
-          onPageChange={(p) => setCurrentPage(p)}
+          onPageChange={(p) => {
+            if (serverSide && onPageChange) onPageChange(p);
+            else setLocalPage(p);
+          }}
         />
       )}
     </div>

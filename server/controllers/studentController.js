@@ -1,85 +1,44 @@
-import Student from '../models/Student.js';
-import User from '../models/User.js';
-import Enrollment from '../models/Enrollment.js';
-import { sendSuccess, sendError } from '../utils/responseHandler.js';
+import ApiError from '../utils/ApiError.js';
+import ApiResponse from '../utils/apiResponse.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import * as studentService from '../services/studentService.js';
 
-export const getStudents = async (req, res, next) => {
-  try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 20;
-    const skip = (page - 1) * limit;
+export const getStudents = asyncHandler(async (req, res) => {
+  const { students, meta } = await studentService.listStudents(req.query);
+  return ApiResponse.success(res, students, 'Students retrieved successfully', meta);
+});
 
-    const query = {};
-    if (req.query.department) query.department = req.query.department;
-    if (req.query.semester) query.currentSemester = Number(req.query.semester);
-    if (req.query.status) query.status = req.query.status;
-    if (req.query.search) {
-      query.$or = [
-        { rollNumber: { $regex: req.query.search, $options: 'i' } },
-        { firstName: { $regex: req.query.search, $options: 'i' } },
-        { lastName: { $regex: req.query.search, $options: 'i' } }
-      ];
-    }
+export const createStudent = asyncHandler(async (req, res) => {
+  const student = await studentService.createStudent(req.body);
+  res.locals.auditEntityId = student._id;
+  res.locals.auditDetails = { enrollmentNumber: student.enrollmentNumber };
+  return ApiResponse.created(res, student, 'Student registered successfully');
+});
 
-    const totalRecords = await Student.countDocuments(query);
-    const students = await Student.find(query)
-      .populate('department')
-      .populate('user', 'email isActive')
-      .sort({ rollNumber: 1 })
-      .skip(skip)
-      .limit(limit);
+export const getStudentById = asyncHandler(async (req, res) => {
+  if (req.user.role === 'student' && req.user.profileId !== req.params.id) {
+    throw ApiError.forbidden('Access denied: cannot view records of another student');
+  }
+  const student = await studentService.getStudentById(req.params.id);
+  return ApiResponse.success(res, student, 'Student details retrieved successfully');
+});
 
-    return sendSuccess(res, 'Students retrieved', students, {
-      pagination: {
-        page,
-        limit,
-        totalRecords,
-        totalPages: Math.ceil(totalRecords / limit)
-      }
-    });
-  } catch (err) { next(err); }
-};
+export const updateStudent = asyncHandler(async (req, res) => {
+  const student = await studentService.updateStudent(req.params.id, req.body);
+  res.locals.auditEntityId = student._id;
+  res.locals.auditDetails = { enrollmentNumber: student.enrollmentNumber, status: student.status };
+  return ApiResponse.success(res, student, 'Student profile updated successfully');
+});
 
-export const createStudent = async (req, res, next) => {
-  try {
-    const { email, password, rollNumber, enrollmentNumber, firstName, lastName, dateOfBirth, gender, department, contactNumber, address, currentSemester } = req.body;
+export const updateStudentStatus = asyncHandler(async (req, res) => {
+  const student = await studentService.updateStudentStatus(req.params.id, req.body.status);
+  res.locals.auditEntityId = student._id;
+  res.locals.auditDetails = { status: student.status };
+  return ApiResponse.success(res, student, `Student status updated to ${student.status}`);
+});
 
-    const user = await User.create({
-      email: email.toLowerCase(),
-      password: password || 'Student@123',
-      role: 'student'
-    });
-
-    const student = await Student.create({
-      user: user._id,
-      rollNumber,
-      enrollmentNumber,
-      firstName,
-      lastName,
-      dateOfBirth,
-      gender,
-      department,
-      contactNumber,
-      address,
-      currentSemester: currentSemester || 1
-    });
-
-    return sendSuccess(res, 'Student registered successfully', student, null, 201);
-  } catch (err) { next(err); }
-};
-
-export const getStudentById = async (req, res, next) => {
-  try {
-    // If student role, enforce reading only self
-    if (req.user.role === 'student' && req.user.profileId !== req.params.id) {
-      return sendError(res, 'Access denied: cannot view records of another student', null, 403);
-    }
-
-    const student = await Student.findById(req.params.id)
-      .populate('department')
-      .populate('user', 'email isActive');
-
-    if (!student) return sendError(res, 'Student record not found', null, 404);
-    return sendSuccess(res, 'Student details retrieved', student);
-  } catch (err) { next(err); }
-};
+export const deleteStudent = asyncHandler(async (req, res) => {
+  const result = await studentService.deleteStudent(req.params.id);
+  res.locals.auditEntityId = req.params.id;
+  return ApiResponse.success(res, result, 'Student record deleted');
+});

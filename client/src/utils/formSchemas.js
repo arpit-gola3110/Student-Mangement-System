@@ -58,9 +58,22 @@ export const FACULTY_STATUS_OPTIONS = [
   { value: 'RETIRED', label: 'Retired' }
 ];
 
+export const SEMESTER_STATUS_OPTIONS = [
+  { value: 'UPCOMING', label: 'Upcoming' },
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'COMPLETED', label: 'Completed' }
+];
+
+export const SUBJECT_TYPE_OPTIONS = [
+  { value: 'THEORY', label: 'Theory' },
+  { value: 'PRACTICAL', label: 'Practical' },
+  { value: 'ELECTIVE', label: 'Elective' },
+  { value: 'PROJECT', label: 'Project' }
+];
+
 export const getStatusBadgeVariant = (statusOrBool) => {
   if (statusOrBool === true || statusOrBool === 'ACTIVE') return 'success';
-  if (statusOrBool === 'ON_LEAVE' || statusOrBool === 'GRADUATED') return 'info';
-  if (statusOrBool === 'SUSPENDED') return 'warning';
+  if (statusOrBool === 'ON_LEAVE' || statusOrBool === 'GRADUATED' || statusOrBool === 'UPCOMING') return 'info';
+  if (statusOrBool === 'SUSPENDED' || statusOrBool === 'COMPLETED') return 'warning';
   return 'danger';
 };

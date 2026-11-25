@@ -12,7 +12,7 @@ const semesterSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'Semester number is required'],
       min: 1,
-      max: 10
+      max: 16
     },
     academicYear: {
       type: String,
@@ -32,6 +32,11 @@ const semesterSchema = new mongoose.Schema(
       enum: ['UPCOMING', 'ACTIVE', 'COMPLETED'],
       default: 'UPCOMING',
       uppercase: true
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true
     }
   },
   { timestamps: true }
@@ -39,5 +44,6 @@ const semesterSchema = new mongoose.Schema(
 
 // Compound unique index ensuring one record per semester per academic year per course
 semesterSchema.index({ course: 1, semesterNumber: 1, academicYear: 1 }, { unique: true });
+semesterSchema.index({ academicYear: 1, isActive: 1 });
 
 export default mongoose.model('Semester', semesterSchema);

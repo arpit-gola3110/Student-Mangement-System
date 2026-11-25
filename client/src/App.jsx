@@ -17,6 +17,9 @@ import StudentDashboard from './pages/student/StudentDashboard';
 import AttendanceMarking from './pages/attendance/AttendanceMarking';
 import StudentResults from './pages/results/StudentResults';
 import DepartmentList from './pages/academic/DepartmentList';
+import CourseManagement from './pages/academic/CourseManagement';
+import SemesterManagement from './pages/academic/SemesterManagement';
+import SubjectManagement from './pages/academic/SubjectManagement';
 import AnnouncementList from './pages/announcements/AnnouncementList';
 import NotFound from './pages/error/NotFound';
 import Unauthorized from './pages/error/Unauthorized';
@@ -63,9 +66,9 @@ export function App() {
                     <Route path="/admin/students" element={<StudentManagement />} />
                     <Route path="/admin/faculty" element={<FacultyManagement />} />
                     <Route path="/admin/departments" element={<DepartmentList />} />
-                    <Route path="/admin/courses" element={<DepartmentList />} />
-                    <Route path="/admin/semesters" element={<DepartmentList />} />
-                    <Route path="/admin/subjects" element={<DepartmentList />} />
+                    <Route path="/admin/courses" element={<CourseManagement />} />
+                    <Route path="/admin/semesters" element={<SemesterManagement />} />
+                    <Route path="/admin/subjects" element={<SubjectManagement />} />
                     <Route path="/admin/enrollments" element={<DepartmentList />} />
                     <Route path="/admin/faculty-assignments" element={<DepartmentList />} />
                     <Route path="/admin/attendance" element={<AttendanceMarking />} />

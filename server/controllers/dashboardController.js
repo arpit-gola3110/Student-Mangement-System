@@ -2,6 +2,8 @@ import Student from '../models/Student.js';
 import Faculty from '../models/Faculty.js';
 import Department from '../models/Department.js';
 import Course from '../models/Course.js';
+import Semester from '../models/Semester.js';
+import Subject from '../models/Subject.js';
 import Attendance from '../models/Attendance.js';
 import FacultyAssignment from '../models/FacultyAssignment.js';
 import Announcement from '../models/Announcement.js';
@@ -9,11 +11,28 @@ import { sendSuccess } from '../utils/responseHandler.js';
 
 export const getAdminDashboardStats = async (req, res, next) => {
   try {
-    const [totalStudents, totalFaculty, totalDepartments, totalCourses] = await Promise.all([
+    const [
+      totalStudents,
+      totalFaculty,
+      totalDepartments,
+      activeDepartments,
+      totalCourses,
+      activeCourses,
+      totalSemesters,
+      activeSemesters,
+      totalSubjects,
+      activeSubjects
+    ] = await Promise.all([
       Student.countDocuments({ status: 'ACTIVE' }),
-      Faculty.countDocuments(),
+      Faculty.countDocuments({ status: { $ne: 'INACTIVE' } }),
       Department.countDocuments(),
-      Course.countDocuments()
+      Department.countDocuments({ isActive: { $ne: false } }),
+      Course.countDocuments(),
+      Course.countDocuments({ isActive: { $ne: false } }),
+      Semester.countDocuments(),
+      Semester.countDocuments({ isActive: { $ne: false } }),
+      Subject.countDocuments(),
+      Subject.countDocuments({ isActive: { $ne: false } })
     ]);
 
     // Aggregate attendance percentage overall
@@ -31,13 +50,19 @@ export const getAdminDashboardStats = async (req, res, next) => {
 
     const avgAttendance = attendanceStats.length > 0 && attendanceStats[0].total > 0
       ? Number(((attendanceStats[0].present / attendanceStats[0].total) * 100).toFixed(1))
-      : 85.0;
+      : 0;
 
     return sendSuccess(res, 'Admin dashboard stats', {
       totalStudents,
       totalFaculty,
       totalDepartments,
+      activeDepartments,
       totalCourses,
+      activeCourses,
+      totalSemesters,
+      activeSemesters,
+      totalSubjects,
+      activeSubjects,
       avgAttendance,
       recentAnnouncements: await Announcement.find().sort({ createdAt: -1 }).limit(5)
     });

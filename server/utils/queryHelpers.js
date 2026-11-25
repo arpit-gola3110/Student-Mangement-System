@@ -33,6 +33,7 @@ export const formatPaginationMeta = (page, limit, totalRecords) => ({
   pagination: {
     page,
     limit,
+    total: totalRecords,
     totalRecords,
     totalPages: Math.max(1, Math.ceil(totalRecords / limit))
   }

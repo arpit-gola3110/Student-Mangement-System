@@ -12,7 +12,8 @@
     "test": "node tests/models.test.js",
     "test:endpoints": "node tests/endpoints.test.js",
     "test:auth": "node tests/auth.test.js",
-    "test:phase5": "node tests/phase5.test.js"
+    "test:phase5": "node tests/phase5.test.js",
+    "test:phase6": "node tests/phase6.test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

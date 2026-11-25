@@ -40,12 +40,40 @@ const subjectSchema = new mongoose.Schema(
       default: 'THEORY',
       uppercase: true
     },
+    maxInternalMarks: {
+      type: Number,
+      min: 0,
+      max: 50,
+      default: 30
+    },
+    maxExternalMarks: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 70
+    },
+    description: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     isActive: {
       type: Boolean,
-      default: true
+      default: true,
+      index: true
     }
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+  }
 );
+
+subjectSchema.index({ course: 1, semester: 1, isActive: 1 });
+
+subjectSchema.virtual('totalMaxMarks').get(function () {
+  return (this.maxInternalMarks ?? 30) + (this.maxExternalMarks ?? 70);
+});
 
 export default mongoose.model('Subject', subjectSchema);

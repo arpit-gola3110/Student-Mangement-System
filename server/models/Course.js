@@ -24,19 +24,31 @@ const courseSchema = new mongoose.Schema(
     durationYears: {
       type: Number,
       required: true,
+      min: 1,
+      max: 8,
       default: 4
     },
     totalSemesters: {
       type: Number,
       required: true,
+      min: 1,
+      max: 16,
       default: 8
+    },
+    description: {
+      type: String,
+      trim: true,
+      default: ''
     },
     isActive: {
       type: Boolean,
-      default: true
+      default: true,
+      index: true
     }
   },
   { timestamps: true }
 );
+
+courseSchema.index({ department: 1, isActive: 1 });
 
 export default mongoose.model('Course', courseSchema);

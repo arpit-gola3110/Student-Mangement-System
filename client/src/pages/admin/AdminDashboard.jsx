@@ -1,4 +1,6 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import PageHeader from '../../components/layout/PageHeader';
 import StatCard from '../../components/data/StatCard';
 import ChartCard from '../../components/data/ChartCard';
@@ -6,15 +8,16 @@ import DataTable from '../../components/data/DataTable';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import { useToast } from '../../context/ToastContext';
+import { dashboardApi } from '../../services/managementService';
 import {
   GraduationCap,
   Users,
   BookOpen,
   Layers,
-  CalendarCheck,
+  Building2,
+  Calendar,
   UserPlus,
   BookPlus,
-  Bell,
   ArrowRight
 } from 'lucide-react';
 import {
@@ -31,14 +34,59 @@ import {
 
 export const AdminDashboard = () => {
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
-  // Illustrative demo data for layout preview (clearly identified as UI preview data)
+  const statsQuery = useQuery({
+    queryKey: ['adminDashboardStats'],
+    queryFn: dashboardApi.getAdminStats
+  });
+
+  const live = statsQuery.data?.data || {};
+  const isStatsLoading = statsQuery.isLoading;
+
   const stats = [
-    { title: 'Total Students', value: '1,248', icon: GraduationCap, trend: 'up', trendValue: '+6.2%', color: 'indigo', subtitle: 'Enrolled in 2026–27' },
-    { title: 'Faculty Members', value: '84', icon: Users, trend: 'up', trendValue: '+2', color: 'emerald', subtitle: 'Active instructional staff' },
-    { title: 'Degree Programs', value: '14', icon: BookOpen, color: 'sky', subtitle: 'Across 6 departments' },
-    { title: 'Curricular Subjects', value: '96', icon: Layers, color: 'amber', subtitle: 'Current active semester' },
-    { title: 'Average Attendance', value: '86.4%', icon: CalendarCheck, trend: 'up', trendValue: '+1.4%', color: 'emerald', subtitle: 'AKTU 75% threshold compliant' }
+    {
+      title: 'Total Students',
+      value: isStatsLoading ? '—' : String(live.totalStudents ?? 0),
+      icon: GraduationCap,
+      color: 'indigo',
+      subtitle: 'Active enrolled scholars'
+    },
+    {
+      title: 'Faculty Members',
+      value: isStatsLoading ? '—' : String(live.totalFaculty ?? 0),
+      icon: Users,
+      color: 'emerald',
+      subtitle: 'Active instructional staff'
+    },
+    {
+      title: 'Departments',
+      value: isStatsLoading ? '—' : String(live.totalDepartments ?? 0),
+      icon: Building2,
+      color: 'sky',
+      subtitle: `${live.activeDepartments ?? 0} active divisions`
+    },
+    {
+      title: 'Degree Courses',
+      value: isStatsLoading ? '—' : String(live.totalCourses ?? 0),
+      icon: BookOpen,
+      color: 'amber',
+      subtitle: `${live.activeCourses ?? 0} active programs`
+    },
+    {
+      title: 'Semesters',
+      value: isStatsLoading ? '—' : String(live.totalSemesters ?? 0),
+      icon: Calendar,
+      color: 'indigo',
+      subtitle: `${live.activeSemesters ?? 0} active terms`
+    },
+    {
+      title: 'Active Subjects',
+      value: isStatsLoading ? '—' : String(live.activeSubjects ?? 0),
+      icon: Layers,
+      color: 'emerald',
+      subtitle: `${live.totalSubjects ?? 0} total catalogued`
+    }
   ];
 
   const studentDistribution = [
@@ -118,24 +166,24 @@ export const AdminDashboard = () => {
               variant="outline"
               size="sm"
               icon={UserPlus}
-              onClick={() => showToast('Student enrollment drawer ready for Phase 6', 'info')}
+              onClick={() => navigate('/admin/students')}
             >
-              Enroll Student
+              Manage Students
             </Button>
             <Button
               variant="primary"
               size="sm"
               icon={BookPlus}
-              onClick={() => showToast('Course allocation modal ready for Phase 6', 'info')}
+              onClick={() => navigate('/admin/courses')}
             >
-              Add Course
+              Manage Courses
             </Button>
           </div>
         }
       />
 
       {/* KPI Statistic Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-5">
         {stats.map((s, idx) => (
           <StatCard key={idx} {...s} />
         ))}

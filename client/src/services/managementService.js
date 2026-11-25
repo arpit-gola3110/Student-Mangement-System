@@ -39,9 +39,57 @@ export const facultyApi = {
   remove: (id) => api.delete(`/faculty/${id}`)
 };
 
-// --- ACADEMIC LOOKUPS (Read-only references for selectors) ---
+// --- DEPARTMENT MANAGEMENT ---
+export const departmentApi = {
+  list: (params) => api.get('/departments', { params: cleanParams(params) }),
+  getById: (id) => api.get(`/departments/${id}`),
+  create: (payload) => api.post('/departments', payload),
+  update: (id, payload) => api.patch(`/departments/${id}`, payload),
+  updateStatus: (id, isActive) => api.patch(`/departments/${id}/status`, { isActive }),
+  remove: (id) => api.delete(`/departments/${id}`)
+};
+
+// --- COURSE MANAGEMENT ---
+export const courseApi = {
+  list: (params) => api.get('/courses', { params: cleanParams(params) }),
+  getById: (id) => api.get(`/courses/${id}`),
+  create: (payload) => api.post('/courses', payload),
+  update: (id, payload) => api.patch(`/courses/${id}`, payload),
+  updateStatus: (id, isActive) => api.patch(`/courses/${id}/status`, { isActive }),
+  remove: (id) => api.delete(`/courses/${id}`)
+};
+
+// --- SEMESTER MANAGEMENT ---
+export const semesterApi = {
+  list: (params) => api.get('/semesters', { params: cleanParams(params) }),
+  getById: (id) => api.get(`/semesters/${id}`),
+  create: (payload) => api.post('/semesters', payload),
+  update: (id, payload) => api.patch(`/semesters/${id}`, payload),
+  updateStatus: (id, payload) => api.patch(`/semesters/${id}/status`, payload),
+  remove: (id) => api.delete(`/semesters/${id}`)
+};
+
+// --- SUBJECT MANAGEMENT ---
+export const subjectApi = {
+  list: (params) => api.get('/subjects', { params: cleanParams(params) }),
+  getById: (id) => api.get(`/subjects/${id}`),
+  create: (payload) => api.post('/subjects', payload),
+  update: (id, payload) => api.patch(`/subjects/${id}`, payload),
+  updateStatus: (id, isActive) => api.patch(`/subjects/${id}/status`, { isActive }),
+  remove: (id) => api.delete(`/subjects/${id}`)
+};
+
+// --- DASHBOARD STATS ---
+export const dashboardApi = {
+  getAdminStats: () => api.get('/dashboards/admin')
+};
+
+// --- ACADEMIC LOOKUPS (Dropdown selectors up to 100 items) ---
 export const academicLookupApi = {
-  getDepartments: (params = { isActive: true }) => api.get('/departments', { params: cleanParams(params) }),
-  getCourses: (params = {}) => api.get('/courses', { params: cleanParams({ isActive: true, ...params }) }),
-  getSemesters: (params = {}) => api.get('/semesters', { params: cleanParams(params) })
+  getDepartments: (params = { isActive: true }) =>
+    api.get('/departments', { params: cleanParams({ limit: 100, ...params }) }),
+  getCourses: (params = {}) =>
+    api.get('/courses', { params: cleanParams({ isActive: true, limit: 100, ...params }) }),
+  getSemesters: (params = {}) =>
+    api.get('/semesters', { params: cleanParams({ isActive: true, limit: 100, ...params }) })
 };

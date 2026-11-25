@@ -79,9 +79,33 @@ export const subjectApi = {
   remove: (id) => api.delete(`/subjects/${id}`)
 };
 
+// --- STUDENT ENROLLMENT MANAGEMENT ---
+export const enrollmentApi = {
+  list: (params) => api.get('/enrollments', { params: cleanParams(params) }),
+  getMy: (params) => api.get('/enrollments/my', { params: cleanParams(params) }),
+  getById: (id) => api.get(`/enrollments/${id}`),
+  create: (payload) => api.post('/enrollments', payload),
+  update: (id, payload) => api.patch(`/enrollments/${id}`, payload),
+  updateStatus: (id, status) => api.patch(`/enrollments/${id}/status`, { status }),
+  remove: (id) => api.delete(`/enrollments/${id}`)
+};
+
+// --- FACULTY ASSIGNMENT MANAGEMENT ---
+export const assignmentApi = {
+  list: (params) => api.get('/faculty-assignments', { params: cleanParams(params) }),
+  getMy: (params) => api.get('/faculty-assignments/my', { params: cleanParams(params) }),
+  getById: (id) => api.get(`/faculty-assignments/${id}`),
+  create: (payload) => api.post('/faculty-assignments', payload),
+  update: (id, payload) => api.patch(`/faculty-assignments/${id}`, payload),
+  updateStatus: (id, status) => api.patch(`/faculty-assignments/${id}/status`, { status }),
+  remove: (id) => api.delete(`/faculty-assignments/${id}`)
+};
+
 // --- DASHBOARD STATS ---
 export const dashboardApi = {
-  getAdminStats: () => api.get('/dashboards/admin')
+  getAdminStats: () => api.get('/dashboards/admin'),
+  getFacultyStats: () => api.get('/dashboards/faculty'),
+  getStudentStats: () => api.get('/dashboards/student')
 };
 
 // --- ACADEMIC LOOKUPS (Dropdown selectors up to 100 items) ---
@@ -91,5 +115,11 @@ export const academicLookupApi = {
   getCourses: (params = {}) =>
     api.get('/courses', { params: cleanParams({ isActive: true, limit: 100, ...params }) }),
   getSemesters: (params = {}) =>
-    api.get('/semesters', { params: cleanParams({ isActive: true, limit: 100, ...params }) })
+    api.get('/semesters', { params: cleanParams({ isActive: true, limit: 100, ...params }) }),
+  getSubjects: (params = {}) =>
+    api.get('/subjects', { params: cleanParams({ isActive: true, limit: 100, ...params }) }),
+  getActiveStudents: (params = {}) =>
+    api.get('/students', { params: cleanParams({ status: 'ACTIVE', limit: 100, ...params }) }),
+  getActiveFaculty: (params = {}) =>
+    api.get('/faculty', { params: cleanParams({ status: 'ACTIVE', limit: 100, ...params }) })
 };

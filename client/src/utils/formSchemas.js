@@ -71,9 +71,22 @@ export const SUBJECT_TYPE_OPTIONS = [
   { value: 'PROJECT', label: 'Project' }
 ];
 
+export const ENROLLMENT_STATUS_OPTIONS = [
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'DROPPED', label: 'Dropped' },
+  { value: 'CANCELLED', label: 'Cancelled' }
+];
+
+export const ASSIGNMENT_STATUS_OPTIONS = [
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'REVOKED', label: 'Revoked' }
+];
+
 export const getStatusBadgeVariant = (statusOrBool) => {
   if (statusOrBool === true || statusOrBool === 'ACTIVE') return 'success';
   if (statusOrBool === 'ON_LEAVE' || statusOrBool === 'GRADUATED' || statusOrBool === 'UPCOMING') return 'info';
-  if (statusOrBool === 'SUSPENDED' || statusOrBool === 'COMPLETED') return 'warning';
+  if (statusOrBool === 'SUSPENDED' || statusOrBool === 'COMPLETED' || statusOrBool === 'DROPPED') return 'warning';
   return 'danger';
 };

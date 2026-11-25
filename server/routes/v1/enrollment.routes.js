@@ -1,34 +1,73 @@
 import express from 'express';
 import { protect } from '../../middleware/authMiddleware.js';
 import { authorizeRoles } from '../../middleware/rbacMiddleware.js';
-import Enrollment from '../../models/Enrollment.js';
-import ApiResponse from '../../utils/apiResponse.js';
+import { validateRequest } from '../../middleware/validateRequest.js';
+import { logAuditEvent } from '../../middleware/auditMiddleware.js';
+import * as enrollmentCtrl from '../../controllers/enrollmentController.js';
+import {
+  enrollmentIdParamSchema,
+  listEnrollmentsQuerySchema,
+  createEnrollmentSchema,
+  updateEnrollmentSchema,
+  updateEnrollmentStatusSchema
+} from '../../validators/enrollmentValidator.js';
 
 const router = express.Router();
 
-router.get('/', protect, authorizeRoles('admin', 'faculty'), async (req, res, next) => {
-  try {
-    const filter = {};
-    if (req.query.student) filter.student = req.query.student;
-    if (req.query.semester) filter.semester = req.query.semester;
-    if (req.query.course) filter.course = req.query.course;
-    if (req.query.academicYear) filter.academicYear = req.query.academicYear;
+router.use(protect);
 
-    const enrollments = await Enrollment.find(filter)
-      .populate('student')
-      .populate('course')
-      .populate('semester')
-      .sort({ createdAt: -1 });
+// Student self-read route (must be declared before /:id)
+router.get(
+  '/my',
+  authorizeRoles('student'),
+  validateRequest({ query: listEnrollmentsQuerySchema }),
+  enrollmentCtrl.getMyEnrollments
+);
 
-    return ApiResponse.success(res, enrollments, 'Enrollments retrieved');
-  } catch (err) { next(err); }
-});
+router.get(
+  '/',
+  authorizeRoles('admin', 'faculty', 'student'),
+  validateRequest({ query: listEnrollmentsQuerySchema }),
+  enrollmentCtrl.getEnrollments
+);
 
-router.post('/', protect, authorizeRoles('admin'), async (req, res, next) => {
-  try {
-    const enrollment = await Enrollment.create(req.body);
-    return ApiResponse.created(res, enrollment, 'Student enrolled successfully');
-  } catch (err) { next(err); }
-});
+router.get(
+  '/:id',
+  authorizeRoles('admin', 'faculty', 'student'),
+  validateRequest({ params: enrollmentIdParamSchema }),
+  enrollmentCtrl.getEnrollmentById
+);
+
+router.post(
+  '/',
+  authorizeRoles('admin'),
+  validateRequest({ body: createEnrollmentSchema }),
+  logAuditEvent('CREATE', 'ENROLLMENT'),
+  enrollmentCtrl.createEnrollments
+);
+
+router.patch(
+  '/:id',
+  authorizeRoles('admin'),
+  validateRequest({ params: enrollmentIdParamSchema, body: updateEnrollmentSchema }),
+  logAuditEvent('UPDATE', 'ENROLLMENT'),
+  enrollmentCtrl.updateEnrollment
+);
+
+router.patch(
+  '/:id/status',
+  authorizeRoles('admin'),
+  validateRequest({ params: enrollmentIdParamSchema, body: updateEnrollmentStatusSchema }),
+  logAuditEvent('UPDATE', 'ENROLLMENT'),
+  enrollmentCtrl.updateEnrollmentStatus
+);
+
+router.delete(
+  '/:id',
+  authorizeRoles('admin'),
+  validateRequest({ params: enrollmentIdParamSchema }),
+  logAuditEvent('DELETE', 'ENROLLMENT'),
+  enrollmentCtrl.deleteEnrollment
+);
 
 export default router;

@@ -12,6 +12,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import StudentManagement from './pages/admin/StudentManagement';
 import FacultyManagement from './pages/admin/FacultyManagement';
+import EnrollmentManagement from './pages/admin/EnrollmentManagement';
+import FacultyAssignmentManagement from './pages/admin/FacultyAssignmentManagement';
 import FacultyDashboard from './pages/faculty/FacultyDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
 import AttendanceMarking from './pages/attendance/AttendanceMarking';
@@ -69,8 +71,8 @@ export function App() {
                     <Route path="/admin/courses" element={<CourseManagement />} />
                     <Route path="/admin/semesters" element={<SemesterManagement />} />
                     <Route path="/admin/subjects" element={<SubjectManagement />} />
-                    <Route path="/admin/enrollments" element={<DepartmentList />} />
-                    <Route path="/admin/faculty-assignments" element={<DepartmentList />} />
+                    <Route path="/admin/enrollments" element={<EnrollmentManagement />} />
+                    <Route path="/admin/faculty-assignments" element={<FacultyAssignmentManagement />} />
                     <Route path="/admin/attendance" element={<AttendanceMarking />} />
                     <Route path="/admin/examinations" element={<StudentResults />} />
                     <Route path="/admin/results" element={<StudentResults />} />

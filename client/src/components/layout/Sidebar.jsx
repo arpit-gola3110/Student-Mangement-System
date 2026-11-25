@@ -99,6 +99,7 @@ export const Sidebar = ({ isCollapsed, onToggleCollapse, isMobileOpen, onCloseMo
         { to: '/student/courses', icon: BookOpen, label: 'My Courses' },
         { to: '/student/subjects', icon: Layers, label: 'My Subjects' },
         { to: '/student/attendance', icon: CalendarCheck, label: 'My Attendance' },
+        { to: '/student/internal-assessment', icon: Award, label: 'Exams & Assessments' },
         { to: '/student/results', icon: FileCheck2, label: 'My Results' },
         { to: '/student/announcements', icon: Bell, label: 'Announcements' }
       ]

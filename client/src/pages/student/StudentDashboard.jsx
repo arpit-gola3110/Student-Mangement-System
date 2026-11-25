@@ -137,9 +137,9 @@ export const StudentDashboard = () => {
                 Attendance
               </Button>
             </Link>
-            <Link to="/student/results">
+            <Link to="/student/internal-assessment">
               <Button variant="primary" size="sm">
-                Results & Grades
+                Internal Marks ({dashData.publishedAssessmentsCount ?? 0})
               </Button>
             </Link>
           </div>

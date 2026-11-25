@@ -8,7 +8,10 @@ import Subject from './Subject.js';
 import Enrollment from './Enrollment.js';
 import FacultyAssignment from './FacultyAssignment.js';
 import Attendance from './Attendance.js';
+import AttendanceSession from './AttendanceSession.js';
 import Examination from './Examination.js';
+import InternalAssessment from './InternalAssessment.js';
+import AssessmentMark from './AssessmentMark.js';
 import Result from './Result.js';
 import Announcement from './Announcement.js';
 import AuditLog from './AuditLog.js';
@@ -24,7 +27,10 @@ export {
   Enrollment,
   FacultyAssignment,
   Attendance,
+  AttendanceSession,
   Examination,
+  InternalAssessment,
+  AssessmentMark,
   Result,
   Announcement,
   AuditLog
@@ -41,7 +47,10 @@ export default {
   Enrollment,
   FacultyAssignment,
   Attendance,
+  AttendanceSession,
   Examination,
+  InternalAssessment,
+  AssessmentMark,
   Result,
   Announcement,
   AuditLog

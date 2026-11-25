@@ -84,9 +84,81 @@ export const ASSIGNMENT_STATUS_OPTIONS = [
   { value: 'REVOKED', label: 'Revoked' }
 ];
 
+export const ATTENDANCE_STATUS_OPTIONS = [
+  { value: 'PRESENT', label: 'Present' },
+  { value: 'ABSENT', label: 'Absent' },
+  { value: 'LATE', label: 'Late' }
+];
+
+export const SESSION_STATUS_OPTIONS = [
+  { value: 'OPEN', label: 'Open' },
+  { value: 'FINALIZED', label: 'Finalized' },
+  { value: 'CANCELLED', label: 'Cancelled' }
+];
+
+export const EXAM_TYPE_OPTIONS = [
+  { value: 'INTERNAL_ASSESSMENT', label: 'Internal Assessment' },
+  { value: 'MID_TERM', label: 'Mid-Term Examination' },
+  { value: 'PRACTICAL', label: 'Practical Examination' },
+  { value: 'EXTERNAL', label: 'External Examination' },
+  { value: 'END_SEMESTER', label: 'End-Semester Examination' }
+];
+
+export const EXAM_STATUS_OPTIONS = [
+  { value: 'DRAFT', label: 'Draft' },
+  { value: 'SCHEDULED', label: 'Scheduled' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'PUBLISHED', label: 'Published' },
+  { value: 'CANCELLED', label: 'Cancelled' }
+];
+
+export const ASSESSMENT_COMPONENT_TYPE_OPTIONS = [
+  { value: 'CLASS_TEST', label: 'Class Test' },
+  { value: 'ASSIGNMENT', label: 'Assignment' },
+  { value: 'QUIZ', label: 'Quiz' },
+  { value: 'PRACTICAL', label: 'Practical' },
+  { value: 'VIVA', label: 'Viva' },
+  { value: 'PROJECT', label: 'Project' },
+  { value: 'OTHER', label: 'Other Approved' }
+];
+
+export const ASSESSMENT_STATUS_OPTIONS = [
+  { value: 'DRAFT', label: 'Draft' },
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'FINALIZED', label: 'Finalized' },
+  { value: 'PUBLISHED', label: 'Published' },
+  { value: 'CANCELLED', label: 'Cancelled' }
+];
+
 export const getStatusBadgeVariant = (statusOrBool) => {
-  if (statusOrBool === true || statusOrBool === 'ACTIVE') return 'success';
-  if (statusOrBool === 'ON_LEAVE' || statusOrBool === 'GRADUATED' || statusOrBool === 'UPCOMING') return 'info';
-  if (statusOrBool === 'SUSPENDED' || statusOrBool === 'COMPLETED' || statusOrBool === 'DROPPED') return 'warning';
+  if (
+    statusOrBool === true ||
+    statusOrBool === 'ACTIVE' ||
+    statusOrBool === 'PRESENT' ||
+    statusOrBool === 'FINALIZED' ||
+    statusOrBool === 'PUBLISHED' ||
+    statusOrBool === 'COMPLETED' ||
+    statusOrBool === 'EXCUSED'
+  ) {
+    return 'success';
+  }
+  if (
+    statusOrBool === 'ON_LEAVE' ||
+    statusOrBool === 'GRADUATED' ||
+    statusOrBool === 'UPCOMING' ||
+    statusOrBool === 'OPEN' ||
+    statusOrBool === 'SCHEDULED' ||
+    statusOrBool === 'SUBMITTED'
+  ) {
+    return 'info';
+  }
+  if (
+    statusOrBool === 'SUSPENDED' ||
+    statusOrBool === 'DROPPED' ||
+    statusOrBool === 'LATE' ||
+    statusOrBool === 'DRAFT'
+  ) {
+    return 'warning';
+  }
   return 'danger';
 };

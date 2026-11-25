@@ -69,6 +69,9 @@ export const validateEnv = () => {
 
   const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '24h';
   const sameSite = (process.env.COOKIE_SAMESITE || 'lax').toLowerCase();
+  const rawThreshold = parseFloat(process.env.ATTENDANCE_THRESHOLD_PERCENT);
+  const attendanceThresholdPercent =
+    Number.isFinite(rawThreshold) && rawThreshold >= 1 && rawThreshold <= 100 ? rawThreshold : 75;
 
   return {
     PORT: parseInt(process.env.PORT, 10) || 5000,
@@ -87,7 +90,8 @@ export const validateEnv = () => {
     COOKIE_SAMESITE: ['strict', 'lax', 'none'].includes(sameSite) ? sameSite : 'lax',
     RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000,
     RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
-    LOGIN_RATE_LIMIT_MAX: parseInt(process.env.LOGIN_RATE_LIMIT_MAX, 10) || 10
+    LOGIN_RATE_LIMIT_MAX: parseInt(process.env.LOGIN_RATE_LIMIT_MAX, 10) || 10,
+    ATTENDANCE_THRESHOLD_PERCENT: attendanceThresholdPercent
   };
 };
 

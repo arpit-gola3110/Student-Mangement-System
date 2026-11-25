@@ -108,6 +108,62 @@ export const dashboardApi = {
   getStudentStats: () => api.get('/dashboards/student')
 };
 
+// --- ATTENDANCE MANAGEMENT (PHASE 8) ---
+export const attendanceApi = {
+  // Sessions
+  listSessions: (params) => api.get('/attendance/sessions', { params: cleanParams(params) }),
+  getSessionById: (id) => api.get(`/attendance/sessions/${id}`),
+  createSession: (payload) => api.post('/attendance/sessions', payload),
+  updateSession: (id, payload) => api.patch(`/attendance/sessions/${id}`, payload),
+  updateSessionStatus: (id, payload) => api.patch(`/attendance/sessions/${id}/status`, payload),
+
+  // Bulk marking, history & correction
+  submitBulk: (payload) => api.post('/attendance/bulk', payload),
+  listHistory: (params) => api.get('/attendance', { params: cleanParams(params) }),
+  getRecordById: (id) => api.get(`/attendance/${id}`),
+  correctRecord: (id, payload) => api.patch(`/attendance/${id}`, payload),
+
+  // Faculty personal
+  getMySubjects: () => api.get('/attendance/my-subjects'),
+  getMySessions: (params) => api.get('/attendance/my-sessions', { params: cleanParams(params) }),
+  getMyHistory: (params) => api.get('/attendance/my-history', { params: cleanParams(params) }),
+
+  // Student personal
+  getMyAttendance: (params) => api.get('/attendance/my', { params: cleanParams(params) }),
+  getMySummary: (params) => api.get('/attendance/my/summary', { params: cleanParams(params) }),
+  getMySubjectBreakdown: (params) => api.get('/attendance/my/subjects', { params: cleanParams(params) }),
+
+  // Reports
+  getOverviewReport: (params) => api.get('/attendance/reports/overview', { params: cleanParams(params) }),
+  getSubjectsReport: (params) => api.get('/attendance/reports/subjects', { params: cleanParams(params) }),
+  getStudentsReport: (params) => api.get('/attendance/reports/students', { params: cleanParams(params) }),
+  getFacultyReport: (params) => api.get('/attendance/reports/faculty', { params: cleanParams(params) })
+};
+
+// --- EXAMINATION MANAGEMENT (PHASE 9) ---
+export const examinationApi = {
+  list: (params) => api.get('/examinations', { params: cleanParams(params) }),
+  getById: (id) => api.get(`/examinations/${id}`),
+  create: (payload) => api.post('/examinations', payload),
+  update: (id, payload) => api.patch(`/examinations/${id}`, payload),
+  updateStatus: (id, payload) => api.patch(`/examinations/${id}/status`, payload),
+  remove: (id) => api.delete(`/examinations/${id}`)
+};
+
+// --- INTERNAL ASSESSMENT & MARKS MANAGEMENT (PHASE 9) ---
+export const assessmentApi = {
+  list: (params) => api.get('/assessments', { params: cleanParams(params) }),
+  getWithRoster: (id) => api.get(`/assessments/${id}`),
+  create: (payload) => api.post('/assessments', payload),
+  update: (id, payload) => api.patch(`/assessments/${id}`, payload),
+  updateStatus: (id, payload) => api.patch(`/assessments/${id}/status`, payload),
+  submitBulkMarks: (assessmentId, payload) => api.post(`/assessments/${assessmentId}/marks/bulk`, payload),
+  listMarks: (params) => api.get('/assessments/marks', { params: cleanParams(params) }),
+  getMarkById: (markId) => api.get(`/assessments/marks/${markId}`),
+  correctMark: (markId, payload) => api.patch(`/assessments/marks/${markId}`, payload),
+  getMyPublishedMarks: (params) => api.get('/assessments/my-marks', { params: cleanParams(params) })
+};
+
 // --- ACADEMIC LOOKUPS (Dropdown selectors up to 100 items) ---
 export const academicLookupApi = {
   getDepartments: (params = { isActive: true }) =>

@@ -81,37 +81,28 @@ export const AdminDashboard = () => {
       subtitle: `${live.activeSemesters ?? 0} active terms`
     },
     {
-      title: 'Active Subjects',
-      value: isStatsLoading ? '—' : String(live.activeSubjects ?? 0),
+      title: 'Overall Attendance',
+      value: isStatsLoading
+        ? '—'
+        : live.avgAttendance !== null && live.avgAttendance !== undefined
+        ? `${live.avgAttendance}%`
+        : 'No Data',
       icon: Layers,
-      color: 'emerald',
-      subtitle: `${live.totalSubjects ?? 0} total catalogued`
+      color: live.attendanceOverview?.overall?.isBelowThreshold ? 'rose' : 'emerald',
+      subtitle: `${live.attendanceOverview?.sessions?.finalizedSessions ?? 0} finalized session(s)`
     }
   ];
 
-  const studentDistribution = [
-    { dept: 'CSE', count: 480 },
-    { dept: 'ECE', count: 280 },
-    { dept: 'ME', count: 210 },
-    { dept: 'CE', count: 160 },
-    { dept: 'IT', count: 118 }
-  ];
-
-  const attendanceTrends = [
-    { week: 'Week 1', rate: 92 },
-    { week: 'Week 2', rate: 89 },
-    { week: 'Week 3', rate: 85 },
-    { week: 'Week 4', rate: 87 },
-    { week: 'Week 5', rate: 84 },
-    { week: 'Week 6', rate: 88 }
-  ];
-
-  const recentActivities = [
-    { id: '1', action: 'BATCH_ENROLLMENT', detail: '60 students enrolled in B.Tech CSE Sem 5 Sec A', actor: 'Registrar Office', time: '10 mins ago', status: 'COMPLETED' },
-    { id: '2', action: 'ATTENDANCE_LOG', detail: 'Daily roll-call recorded for BCS-554 Mini Project', actor: 'Dr. Rajesh Sharma', time: '45 mins ago', status: 'COMPLETED' },
-    { id: '3', action: 'INTERNAL_MARKS', detail: 'Sessional 1 marks entered for BCS-501 DBMS', actor: 'Prof. Alok Gupta', time: '2 hours ago', status: 'PENDING' },
-    { id: '4', action: 'NOTICE_BROADCAST', detail: 'AKTU Mini Project Guidelines Circular Published', actor: 'Dean Academics', time: '1 day ago', status: 'PUBLISHED' }
-  ];
+  const studentDistribution = live.attendanceOverview?.departmentStudentDistribution || [];
+  const attendanceTrends = live.attendanceOverview?.dateTrend || [];
+  const recentActivities = (live.recentAuditLogs || []).map((log) => ({
+    id: log._id,
+    action: `${log.action}_${log.entity}`,
+    detail: log.details?.url || log.entity,
+    actor: log.actor?.name || log.actor?.email || log.actorRole,
+    time: new Date(log.timestamp).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }),
+    status: 'COMPLETED'
+  }));
 
   const activityColumns = [
     {
@@ -174,9 +165,9 @@ export const AdminDashboard = () => {
               variant="primary"
               size="sm"
               icon={BookPlus}
-              onClick={() => navigate('/admin/courses')}
+              onClick={() => navigate('/admin/examinations')}
             >
-              Manage Courses
+              Examinations ({live.examinationSummary?.total ?? 0})
             </Button>
           </div>
         }
@@ -193,47 +184,59 @@ export const AdminDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartCard
           title="Student Distribution by Department"
-          subtitle="Total enrolled scholars across major engineering faculties"
+          subtitle="Live active scholars across departments"
         >
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={studentDistribution} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="dept" tickLine={false} axisLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />
-                <YAxis tickLine={false} axisLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />
-                <Tooltip
-                  cursor={{ fill: '#F1F5F9' }}
-                  contentStyle={{ backgroundColor: '#1E293B', borderRadius: '12px', border: 'none', color: '#FFF' }}
-                />
-                <Bar dataKey="count" fill="#4F46E5" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {studentDistribution.length === 0 ? (
+            <div className="h-64 flex items-center justify-center text-sm text-slate-500">
+              No active student distribution records available.
+            </div>
+          ) : (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={studentDistribution} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                  <XAxis dataKey="dept" tickLine={false} axisLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />
+                  <YAxis tickLine={false} axisLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />
+                  <Tooltip
+                    cursor={{ fill: '#F1F5F9' }}
+                    contentStyle={{ backgroundColor: '#1E293B', borderRadius: '12px', border: 'none', color: '#FFF' }}
+                  />
+                  <Bar dataKey="count" fill="#4F46E5" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </ChartCard>
 
         <ChartCard
           title="Campus-Wide Attendance Trend"
-          subtitle="Weekly aggregate percentage against 75% regulatory threshold"
+          subtitle={`Finalized daily rate against ${live.attendanceOverview?.policy?.threshold ?? 75}% threshold`}
         >
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={attendanceTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorAttd" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="week" tickLine={false} axisLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />
-                <YAxis domain={[60, 100]} tickLine={false} axisLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#1E293B', borderRadius: '12px', border: 'none', color: '#FFF' }}
-                />
-                <Area type="monotone" dataKey="rate" stroke="#10B981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorAttd)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          {attendanceTrends.length === 0 ? (
+            <div className="h-64 flex items-center justify-center text-sm text-slate-500">
+              No finalized attendance sessions recorded yet.
+            </div>
+          ) : (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={attendanceTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorAttd" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                  <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />
+                  <YAxis domain={[0, 100]} tickLine={false} axisLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1E293B', borderRadius: '12px', border: 'none', color: '#FFF' }}
+                  />
+                  <Area type="monotone" dataKey="rate" stroke="#10B981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorAttd)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </ChartCard>
       </div>
 

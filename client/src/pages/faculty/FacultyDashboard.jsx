@@ -173,11 +173,13 @@ export const FacultyDashboard = () => {
           subtitle="Active assignment year(s)"
         />
         <StatCard
-          title="Department Notices"
-          value={notices.length}
+          title="Assessments"
+          value={statsRes?.data?.assessmentOverview?.assignedComponents ?? 0}
           icon={CheckCircle2}
           color="amber"
-          subtitle="Recent faculty circulars"
+          subtitle={`${statsRes?.data?.assessmentOverview?.pendingSubmissions ?? 0} pending · ${
+            statsRes?.data?.assessmentOverview?.completedSubmissions ?? 0
+          } completed`}
         />
       </div>
 

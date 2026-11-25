@@ -16,7 +16,12 @@ import EnrollmentManagement from './pages/admin/EnrollmentManagement';
 import FacultyAssignmentManagement from './pages/admin/FacultyAssignmentManagement';
 import FacultyDashboard from './pages/faculty/FacultyDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
-import AttendanceMarking from './pages/attendance/AttendanceMarking';
+import AdminAttendancePage from './pages/admin/AdminAttendancePage';
+import FacultyAttendancePage from './pages/faculty/FacultyAttendancePage';
+import StudentAttendancePage from './pages/student/StudentAttendancePage';
+import AdminExaminationsPage from './pages/admin/AdminExaminationsPage';
+import FacultyAssessmentPage from './pages/faculty/FacultyAssessmentPage';
+import StudentAssessmentPage from './pages/student/StudentAssessmentPage';
 import StudentResults from './pages/results/StudentResults';
 import DepartmentList from './pages/academic/DepartmentList';
 import CourseManagement from './pages/academic/CourseManagement';
@@ -73,8 +78,8 @@ export function App() {
                     <Route path="/admin/subjects" element={<SubjectManagement />} />
                     <Route path="/admin/enrollments" element={<EnrollmentManagement />} />
                     <Route path="/admin/faculty-assignments" element={<FacultyAssignmentManagement />} />
-                    <Route path="/admin/attendance" element={<AttendanceMarking />} />
-                    <Route path="/admin/examinations" element={<StudentResults />} />
+                    <Route path="/admin/attendance" element={<AdminAttendancePage />} />
+                    <Route path="/admin/examinations" element={<AdminExaminationsPage />} />
                     <Route path="/admin/results" element={<StudentResults />} />
                     <Route path="/admin/announcements" element={<AnnouncementList />} />
                     <Route path="/admin/reports" element={<AdminDashboard />} />
@@ -88,8 +93,9 @@ export function App() {
                     <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
                     <Route path="/faculty/subjects" element={<FacultyDashboard />} />
                     <Route path="/faculty/students" element={<FacultyDashboard />} />
-                    <Route path="/faculty/attendance" element={<AttendanceMarking />} />
-                    <Route path="/faculty/internal-assessment" element={<StudentResults />} />
+                    <Route path="/faculty/attendance" element={<FacultyAttendancePage />} />
+                    <Route path="/faculty/examinations" element={<FacultyAssessmentPage />} />
+                    <Route path="/faculty/internal-assessment" element={<FacultyAssessmentPage />} />
                     <Route path="/faculty/results" element={<StudentResults />} />
                     <Route path="/faculty/announcements" element={<AnnouncementList />} />
                     <Route path="/faculty/profile" element={<FacultyDashboard />} />
@@ -101,7 +107,9 @@ export function App() {
                     <Route path="/student/profile" element={<StudentDashboard />} />
                     <Route path="/student/courses" element={<StudentDashboard />} />
                     <Route path="/student/subjects" element={<StudentDashboard />} />
-                    <Route path="/student/attendance" element={<AttendanceMarking />} />
+                    <Route path="/student/attendance" element={<StudentAttendancePage />} />
+                    <Route path="/student/examinations" element={<StudentAssessmentPage />} />
+                    <Route path="/student/internal-assessment" element={<StudentAssessmentPage />} />
                     <Route path="/student/results" element={<StudentResults />} />
                     <Route path="/student/announcements" element={<AnnouncementList />} />
                   </Route>

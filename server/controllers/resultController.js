@@ -1,83 +1,168 @@
-import Examination from '../models/Examination.js';
-import Result from '../models/Result.js';
-import { calculateGrade, calculateSGPA } from '../utils/gradeCalculator.js';
-import { sendSuccess, sendError } from '../utils/responseHandler.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import ApiResponse from '../utils/apiResponse.js';
+import ApiError from '../utils/ApiError.js';
+import * as calcService from '../services/resultCalculationService.js';
+import FacultyAssignment from '../models/FacultyAssignment.js';
 
-export const getExaminations = async (req, res, next) => {
-  try {
-    const exams = await Examination.find().populate('semester').sort({ startDate: -1 });
-    return sendSuccess(res, 'Examinations list', exams);
-  } catch (err) { next(err); }
-};
+export const checkReadiness = asyncHandler(async (req, res) => {
+  const readiness = await calcService.checkCalculationReadiness(req.query);
+  return ApiResponse.success(res, readiness, 'Result calculation readiness evaluated successfully');
+});
 
-export const createExamination = async (req, res, next) => {
-  try {
-    const exam = await Examination.create(req.body);
-    return sendSuccess(res, 'Examination scheduled', exam, null, 201);
-  } catch (err) { next(err); }
-};
+export const calculateResults = asyncHandler(async (req, res) => {
+  const summary = await calcService.calculateResultsBulk(req.body, req.user.userId);
+  res.locals.auditEntityId = req.body.examination;
+  res.locals.auditDetails = {
+    course: req.body.course,
+    semester: req.body.semester,
+    academicYear: req.body.academicYear,
+    calculatedCount: summary.calculatedCount,
+    incompleteCount: summary.incompleteCount,
+    skippedExistingCount: summary.skippedExistingCount
+  };
+  return ApiResponse.created(res, summary, `Calculated ${summary.calculatedCount} student result(s)`);
+});
 
-export const submitMarksBatch = async (req, res, next) => {
-  try {
-    const { examinationId, subjectId, records } = req.body;
+export const recalculateResults = asyncHandler(async (req, res) => {
+  const summary = await calcService.recalculateResults(req.body, req.user.userId);
+  res.locals.auditEntityId = summary.resultIds[0] || null;
+  res.locals.auditDetails = {
+    recalculatedCount: summary.recalculatedCount,
+    reason: req.body.reason
+  };
+  return ApiResponse.success(res, summary, `Recalculated ${summary.recalculatedCount} result(s)`);
+});
 
-    const operations = records.map((record) => {
-      const internalMarks = Number(record.internalMarks) || 0;
-      const externalMarks = Number(record.externalMarks) || 0;
-      const totalMarks = internalMarks + externalMarks;
-      const { grade, gradePoints } = calculateGrade(totalMarks, 100);
+export const listResults = asyncHandler(async (req, res) => {
+  const result = await calcService.listResults(req.query, req.user);
+  return ApiResponse.success(
+    res,
+    { results: result.results },
+    'Results retrieved successfully',
+    { pagination: result.pagination }
+  );
+});
 
-      return {
-        updateOne: {
-          filter: {
-            examination: examinationId,
-            student: record.studentId,
-            subject: subjectId
-          },
-          update: {
-            $set: {
-              evaluatedBy: req.user.profileId || req.user.userId,
-              internalMarks,
-              externalMarks,
-              totalMarks,
-              grade,
-              gradePoints,
-              remarks: record.remarks || ''
-            }
-          },
-          upsert: true
-        }
-      };
-    });
+export const getResultById = asyncHandler(async (req, res) => {
+  const result = await calcService.getResultById(req.params.id, req.user);
+  return ApiResponse.success(res, { result }, 'Result details retrieved successfully');
+});
 
-    const result = await Result.bulkWrite(operations);
-    return sendSuccess(res, 'Marks saved successfully', { count: result.upsertedCount + result.modifiedCount });
-  } catch (err) { next(err); }
-};
+export const getResultHistory = asyncHandler(async (req, res) => {
+  const result = await calcService.getResultById(req.params.id, req.user);
+  return ApiResponse.success(
+    res,
+    {
+      resultId: result._id,
+      currentVersion: result.calculationVersion,
+      revisionHistory: result.revisionHistory || []
+    },
+    'Result revision history retrieved successfully'
+  );
+});
 
-export const getStudentResults = async (req, res, next) => {
-  try {
-    const studentId = req.params.studentId || req.user.profileId;
+export const approveResult = asyncHandler(async (req, res) => {
+  const result = await calcService.approveResult(req.params.id, req.user.userId);
+  res.locals.auditEntityId = result._id;
+  res.locals.auditDetails = { calculationStatus: result.calculationStatus };
+  return ApiResponse.success(res, { result }, 'Result approved successfully');
+});
 
-    if (req.user.role === 'student' && req.user.profileId !== studentId) {
-      return sendError(res, 'Forbidden', null, 403);
-    }
+export const rejectResult = asyncHandler(async (req, res) => {
+  const result = await calcService.rejectResult(req.params.id, req.body.reason, req.user.userId);
+  res.locals.auditEntityId = result._id;
+  res.locals.auditDetails = { calculationStatus: result.calculationStatus, reason: req.body.reason };
+  return ApiResponse.success(res, { result }, 'Result rejected cleanly');
+});
 
-    const results = await Result.find({ student: studentId })
-      .populate('subject', 'code name credits type')
-      .populate('examination', 'title examType academicYear')
-      .sort({ createdAt: -1 });
+export const publishResult = asyncHandler(async (req, res) => {
+  const result = await calcService.publishResult(req.params.id, req.user.userId);
+  res.locals.auditEntityId = result._id;
+  res.locals.auditDetails = { publicationStatus: result.publicationStatus };
+  return ApiResponse.success(res, { result }, 'Result published to student portal');
+});
 
-    const sgpaInput = results.map(r => ({
-      credits: r.subject?.credits || 3,
-      gradePoints: r.gradePoints
-    }));
+export const withdrawResult = asyncHandler(async (req, res) => {
+  const result = await calcService.withdrawResult(req.params.id, req.body.reason, req.user.userId);
+  res.locals.auditEntityId = result._id;
+  res.locals.auditDetails = { publicationStatus: result.publicationStatus, reason: req.body.reason };
+  return ApiResponse.success(res, { result }, 'Published result withdrawn safely');
+});
 
-    const sgpa = calculateSGPA(sgpaInput);
+export const batchApproveResults = asyncHandler(async (req, res) => {
+  const summary = await calcService.batchApproveOrPublish(req.body.resultIds, 'APPROVE', req.user.userId);
+  res.locals.auditDetails = { action: 'BATCH_APPROVE', processedCount: summary.processedCount };
+  return ApiResponse.success(res, summary, `Approved ${summary.processedCount} result(s)`);
+});
 
-    return sendSuccess(res, 'Student results retrieved', {
-      sgpa,
-      results
-    });
-  } catch (err) { next(err); }
-};
+export const batchPublishResults = asyncHandler(async (req, res) => {
+  const summary = await calcService.batchApproveOrPublish(req.body.resultIds, 'PUBLISH', req.user.userId);
+  res.locals.auditDetails = { action: 'BATCH_PUBLISH', processedCount: summary.processedCount };
+  return ApiResponse.success(res, summary, `Published ${summary.processedCount} result(s)`);
+});
+
+export const correctResult = asyncHandler(async (req, res) => {
+  const { result, auditDetails } = await calcService.correctResult(req.params.id, req.body, req.user.userId);
+  res.locals.auditEntityId = result._id;
+  res.locals.auditDetails = auditDetails;
+  return ApiResponse.success(res, { result }, 'Result corrected with versioned revision history');
+});
+
+// === STUDENT SELF-SCOPED ===
+export const getMyResults = asyncHandler(async (req, res) => {
+  const data = await calcService.getStudentMyResults(req.user, req.query);
+  return ApiResponse.success(res, data, 'Published student results retrieved successfully');
+});
+
+export const getMySemesterSummary = asyncHandler(async (req, res) => {
+  const data = await calcService.getStudentMyResults(req.user, req.query);
+  return ApiResponse.success(
+    res,
+    {
+      student: data.student,
+      semesterSummaries: data.semesterSummaries,
+      cgpa: data.cgpa,
+      cgpaNote: data.cgpaNote
+    },
+    'Semester result summary retrieved successfully'
+  );
+});
+
+export const getMySubjectSummary = asyncHandler(async (req, res) => {
+  const data = await calcService.getStudentMyResults(req.user, req.query);
+  return ApiResponse.success(
+    res,
+    { results: data.results },
+    'Subject-wise published results retrieved successfully'
+  );
+});
+
+export const getStudentResults = asyncHandler(async (req, res) => {
+  const targetId = req.params.studentId || req.user.profileId;
+  if (req.user.role === 'student' && String(req.user.profileId) !== String(targetId)) {
+    throw ApiError.forbidden('Forbidden: cannot inspect another student results');
+  }
+  const data = await calcService.getStudentMyResults({ role: 'student', profileId: targetId }, req.query);
+  return ApiResponse.success(res, data, 'Student results retrieved successfully');
+});
+
+// === FACULTY SCOPED ===
+export const getFacultyAssignedSubjects = asyncHandler(async (req, res) => {
+  const assignments = await FacultyAssignment.find({ faculty: req.user.profileId, status: 'ACTIVE' })
+    .populate('course', 'code name')
+    .populate('semester', 'semesterNumber academicYear')
+    .populate('subject', 'code name credits type')
+    .lean();
+  return ApiResponse.success(res, { assignments }, 'Assigned faculty subjects retrieved successfully');
+});
+
+export const getFacultyResultsOverview = asyncHandler(async (req, res) => {
+  const data = await calcService.listResults({ ...req.query, limit: 100 }, req.user);
+  return ApiResponse.success(res, { results: data.results }, 'Faculty subject results retrieved successfully');
+});
+
+// === ADMIN REPORTS ===
+export const getReportsOverview = asyncHandler(async (req, res) => {
+  const report = await calcService.getResultReportsOverview(req.query);
+  return ApiResponse.success(res, report, 'Result reports overview retrieved successfully');
+});

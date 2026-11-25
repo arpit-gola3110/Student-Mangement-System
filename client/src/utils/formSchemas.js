@@ -130,6 +130,33 @@ export const ASSESSMENT_STATUS_OPTIONS = [
   { value: 'CANCELLED', label: 'Cancelled' }
 ];
 
+export const RESULT_STATUS_OPTIONS = [
+  { value: 'PASS', label: 'Pass' },
+  { value: 'FAIL', label: 'Fail' },
+  { value: 'ABSENT', label: 'Absent' },
+  { value: 'INCOMPLETE', label: 'Incomplete' },
+  { value: 'WITHHELD', label: 'Withheld' }
+];
+
+export const RESULT_CALC_STATUS_OPTIONS = [
+  { value: 'CALCULATED', label: 'Calculated' },
+  { value: 'REQUIRES_REVIEW', label: 'Requires Review' },
+  { value: 'APPROVED', label: 'Approved' },
+  { value: 'REJECTED', label: 'Rejected' }
+];
+
+export const RESULT_PUB_STATUS_OPTIONS = [
+  { value: 'UNPUBLISHED', label: 'Unpublished' },
+  { value: 'PUBLISHED', label: 'Published' },
+  { value: 'WITHDRAWN', label: 'Withdrawn' }
+];
+
+export const EVALUATION_MODE_OPTIONS = [
+  { value: 'COMBINED', label: 'Combined (Internal + External)' },
+  { value: 'INTERNAL_ONLY', label: 'Internal Assessment Only' },
+  { value: 'EXTERNAL_ONLY', label: 'External Examination Only' }
+];
+
 export const getStatusBadgeVariant = (statusOrBool) => {
   if (
     statusOrBool === true ||
@@ -138,6 +165,8 @@ export const getStatusBadgeVariant = (statusOrBool) => {
     statusOrBool === 'FINALIZED' ||
     statusOrBool === 'PUBLISHED' ||
     statusOrBool === 'COMPLETED' ||
+    statusOrBool === 'PASS' ||
+    statusOrBool === 'APPROVED' ||
     statusOrBool === 'EXCUSED'
   ) {
     return 'success';
@@ -148,7 +177,8 @@ export const getStatusBadgeVariant = (statusOrBool) => {
     statusOrBool === 'UPCOMING' ||
     statusOrBool === 'OPEN' ||
     statusOrBool === 'SCHEDULED' ||
-    statusOrBool === 'SUBMITTED'
+    statusOrBool === 'SUBMITTED' ||
+    statusOrBool === 'CALCULATED'
   ) {
     return 'info';
   }
@@ -156,7 +186,11 @@ export const getStatusBadgeVariant = (statusOrBool) => {
     statusOrBool === 'SUSPENDED' ||
     statusOrBool === 'DROPPED' ||
     statusOrBool === 'LATE' ||
-    statusOrBool === 'DRAFT'
+    statusOrBool === 'DRAFT' ||
+    statusOrBool === 'UNPUBLISHED' ||
+    statusOrBool === 'REQUIRES_REVIEW' ||
+    statusOrBool === 'INCOMPLETE' ||
+    statusOrBool === 'WITHHELD'
   ) {
     return 'warning';
   }

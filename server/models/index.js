@@ -12,6 +12,7 @@ import AttendanceSession from './AttendanceSession.js';
 import Examination from './Examination.js';
 import InternalAssessment from './InternalAssessment.js';
 import AssessmentMark from './AssessmentMark.js';
+import AcademicResultPolicy from './AcademicResultPolicy.js';
 import Result from './Result.js';
 import Announcement from './Announcement.js';
 import AuditLog from './AuditLog.js';
@@ -31,6 +32,7 @@ export {
   Examination,
   InternalAssessment,
   AssessmentMark,
+  AcademicResultPolicy,
   Result,
   Announcement,
   AuditLog
@@ -51,6 +53,7 @@ export default {
   Examination,
   InternalAssessment,
   AssessmentMark,
+  AcademicResultPolicy,
   Result,
   Announcement,
   AuditLog

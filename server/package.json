@@ -16,7 +16,8 @@
     "test:phase6": "node tests/phase6.test.js",
     "test:phase7": "node tests/phase7.test.js",
     "test:phase8": "node tests/phase8.test.js",
-    "test:phase9": "node tests/phase9.test.js"
+    "test:phase9": "node tests/phase9.test.js",
+    "test:phase10": "node tests/phase10.test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

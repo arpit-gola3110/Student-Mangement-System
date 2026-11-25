@@ -164,6 +164,35 @@ export const assessmentApi = {
   getMyPublishedMarks: (params) => api.get('/assessments/my-marks', { params: cleanParams(params) })
 };
 
+// --- ACADEMIC RESULT POLICIES (PHASE 10) ---
+export const resultPolicyApi = {
+  list: (params) => api.get('/result-policies', { params: cleanParams(params) }),
+  getById: (id) => api.get(`/result-policies/${id}`),
+  create: (payload) => api.post('/result-policies', payload),
+  update: (id, payload) => api.patch(`/result-policies/${id}`, payload),
+  updateStatus: (id, isActive) => api.patch(`/result-policies/${id}/status`, { isActive })
+};
+
+// --- RESULTS MANAGEMENT (PHASE 10) ---
+export const resultApi = {
+  checkReadiness: (params) => api.get('/results/readiness', { params: cleanParams(params) }),
+  calculate: (payload) => api.post('/results/calculate', payload),
+  recalculate: (payload) => api.post('/results/recalculate', payload),
+  list: (params) => api.get('/results', { params: cleanParams(params) }),
+  getById: (id) => api.get(`/results/${id}`),
+  getHistory: (id) => api.get(`/results/${id}/history`),
+  approve: (id, reason = '') => api.post(`/results/${id}/approve`, { reason }),
+  reject: (id, reason) => api.post(`/results/${id}/reject`, { reason }),
+  publish: (id, reason = '') => api.post(`/results/${id}/publish`, { reason }),
+  withdraw: (id, reason) => api.post(`/results/${id}/withdraw`, { reason }),
+  batchApprove: (resultIds) => api.post('/results/batch-approve', { resultIds }),
+  batchPublish: (resultIds) => api.post('/results/batch-publish', { resultIds }),
+  correct: (id, payload) => api.patch(`/results/${id}/correct`, payload),
+  getMyResults: (params) => api.get('/results/my', { params: cleanParams(params) }),
+  getFacultyOverview: (params) => api.get('/results/faculty/overview', { params: cleanParams(params) }),
+  getReportsOverview: (params) => api.get('/results/reports/overview', { params: cleanParams(params) })
+};
+
 // --- ACADEMIC LOOKUPS (Dropdown selectors up to 100 items) ---
 export const academicLookupApi = {
   getDepartments: (params = { isActive: true }) =>
